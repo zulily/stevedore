@@ -4,5 +4,11 @@
 	"Packages": [
 		"./..."
 	],
-	"Deps": []
+	"Deps": [
+		{
+			"ImportPath": "github.com/emicklei/go-restful",
+			"Comment": "v1.1.2-50-g692a500",
+			"Rev": "692a50017a7049b26cf7ea4ccfc0d8c77369a793"
+		}
+	]
 }
