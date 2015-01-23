@@ -13,4 +13,4 @@ set -o pipefail
 PROJECT_ROOT=$(dirname "${BASH_SOURCE}")/..
 source "${PROJECT_ROOT}/build/common.sh"
 
-build_docker_image core/build build-server
+build_docker_image core/builder build-server

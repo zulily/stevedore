@@ -37,8 +37,8 @@ source "${PROJECT_ROOT}/build/common.sh"
 #   images=("core/foobar" "core/hello-world")
 #   push_images images[@]
 push_images() {
-  echo "Pushing version ${GIT_VERSION} of core/build to docker repository..."
-  $GCR_PUSH -t core/build -v $GIT_VERSION
+  echo "Pushing version ${GIT_VERSION} of core/builder to docker repository..."
+  $GCR_PUSH -t core/builder -v $GIT_VERSION
 }
 
 push_images
