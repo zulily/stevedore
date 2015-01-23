@@ -1,9 +1,21 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
+	"sync"
 
-	"core-gitlab.corp.zulily.com/core/build/Godeps/_workspace/src/github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful"
+	"github.com/spf13/viper"
+)
+
+var (
+	// repoLock guards access to repos
+	repoLock sync.Mutex
+	repos    map[string]Repo
 )
 
 // Repo represents a git source code repository.
@@ -14,13 +26,11 @@ type Repo struct {
 
 // RepoResource provides functions for storing and retrieving Repo metadata
 // from persistent storage.
-type RepoResource struct {
-	repos map[string]Repo
-}
+type RepoResource struct{}
 
 // NewRepoResource creates a new RepoResource.
 func NewRepoResource() RepoResource {
-	return RepoResource{map[string]Repo{}}
+	return RepoResource{}
 }
 
 // Register creates a restful.WebService and configures API routes for managing
@@ -33,7 +43,8 @@ func (r RepoResource) Register(container *restful.Container) {
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 
-	ws.Route(ws.GET("/{repo-id}").To(r.findRepo).
+	ws.Route(ws.GET("/{repo-id}").
+		To(r.findRepo).
 		Doc("get a repo").
 		Operation("findRepo").
 		Param(ws.PathParameter("repo-id", "repo id").DataType("string")).
@@ -43,12 +54,38 @@ func (r RepoResource) Register(container *restful.Container) {
 }
 
 func (r RepoResource) findRepo(request *restful.Request, response *restful.Response) {
+	if err := loadRepos(); err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusInternalServerError, "500: "+err.Error())
+		return
+	}
 	id := request.PathParameter("repo-id")
-	repo := r.repos[id]
+	repo := repos[id]
 	if len(repo.URL) == 0 {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusNotFound, "404: Repo could not be found.")
 		return
 	}
 	response.WriteEntity(repo)
+}
+
+func loadRepos() error {
+	dataDir := viper.GetString("data")
+	if dataDir == "" {
+		return fmt.Errorf("data not set")
+	}
+
+	repoLock.Lock()
+	defer repoLock.Unlock()
+
+	jsonFile := filepath.Clean(dataDir + "/repos.json")
+	file, err := ioutil.ReadFile(jsonFile)
+	if err != nil {
+		return err
+	}
+
+	repos = map[string]Repo{}
+	json.Unmarshal(file, &repos)
+	fmt.Printf("Loaded %v repos from %v\n", len(repos), jsonFile)
+	return nil
 }
