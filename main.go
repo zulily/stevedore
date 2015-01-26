@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -60,10 +63,42 @@ func startWebServer(shutdown chan bool) (hostport string) {
 func startBuilder(shutdown chan bool, hostport string) {
 	go func() {
 		for {
-			log.Println("Checking repos...")
-
 			time.Sleep(5 * time.Second)
+			log.Println("Checking repos...")
+			repos, err := listRepos(hostport)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			for k, repo := range repos {
+				fmt.Printf("key: %v, repo: %+v\n", k, repo)
+			}
 		}
 		shutdown <- true
 	}()
+}
+
+func listRepos(hostport string) (repos map[string]Repo, err error) {
+	url := fmt.Sprintf("http://%v/repos", hostport)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Non-200 response from %v: %v", url, resp.StatusCode)
+	}
+
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(bytes, &repos); err != nil {
+		return nil, err
+	}
+
+	return repos, nil
 }

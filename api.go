@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	// repoLock guards access to repos
-	repoLock sync.Mutex
-	repos    map[string]Repo
+	// mu guards access to repos (and other data structures eventually)
+	mu    sync.Mutex
+	repos map[string]Repo
 )
 
 // APIResource is implemented by values that register endpoints with a
@@ -55,6 +55,12 @@ func (r RepoResource) Register(container *restful.Container) {
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 
+	ws.Route(ws.GET("/").
+		To(r.findAllRepos).
+		Doc("get all repos").
+		Operation("findAllRepos").
+		Returns(200, "OK", map[string]Repo{}))
+
 	ws.Route(ws.GET("/{repo-id}").
 		To(r.findRepo).
 		Doc("get a repo").
@@ -65,7 +71,22 @@ func (r RepoResource) Register(container *restful.Container) {
 	container.Add(ws)
 }
 
+func (r RepoResource) findAllRepos(request *restful.Request, response *restful.Response) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if err := loadRepos(); err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusInternalServerError, "500: "+err.Error())
+		return
+	}
+	response.WriteEntity(repos)
+}
+
 func (r RepoResource) findRepo(request *restful.Request, response *restful.Response) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	if err := loadRepos(); err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "500: "+err.Error())
@@ -86,9 +107,6 @@ func loadRepos() error {
 	if dataDir == "" {
 		return fmt.Errorf("data not set")
 	}
-
-	repoLock.Lock()
-	defer repoLock.Unlock()
 
 	jsonFile := filepath.Clean(dataDir + "/repos.json")
 	file, err := ioutil.ReadFile(jsonFile)
