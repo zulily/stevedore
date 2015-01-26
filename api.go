@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"encoding/json"
@@ -18,6 +18,18 @@ var (
 	repos    map[string]Repo
 )
 
+// APIResource is implemented by values that register endpoints with a
+// restful.Container via the Register function.
+type APIResource interface {
+	Register(container *restful.Container)
+}
+
+// NewAPIResources returns all APIResources that will be provided by the api.
+func NewAPIResources() []APIResource {
+	r := newRepoResource()
+	return []APIResource{r}
+}
+
 // Repo represents a git source code repository.
 type Repo struct {
 	URL        string
@@ -29,7 +41,7 @@ type Repo struct {
 type RepoResource struct{}
 
 // NewRepoResource creates a new RepoResource.
-func NewRepoResource() RepoResource {
+func newRepoResource() RepoResource {
 	return RepoResource{}
 }
 
