@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -77,10 +78,13 @@ func startBuilder(shutdown chan bool, hostport string) {
 			for k, repo := range repos {
 				fmt.Printf("key: %v, repo: %+v\n", k, repo)
 
-				if err := checkout(k, repo); err != nil {
+				head, err := checkout(k, repo)
+				if err != nil {
 					fmt.Printf("Error checking %v: %v\n", k, err)
 					continue
 				}
+
+				fmt.Printf("%v is at %v\n", k, head)
 			}
 		}
 		shutdown <- true
@@ -111,9 +115,9 @@ func listRepos(hostport string) (repos map[string]Repo, err error) {
 	return repos, nil
 }
 
-func checkout(id string, r Repo) error {
+func checkout(id string, r Repo) (head string, err error) {
 	if r.URL == "" {
-		return fmt.Errorf("Repo has empty URL")
+		return "", fmt.Errorf("Repo has empty URL")
 	}
 
 	local := filepath.Join(os.TempDir(), "builder", id)
@@ -123,15 +127,57 @@ func checkout(id string, r Repo) error {
 	}
 
 	if err := os.MkdirAll(local, 0755); err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	cmd := exec.Command("git", "clean", "-d", "-f", "-x")
+	cmd.Dir = local
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+
+	cmd = exec.Command("git", "fetch", "--all")
+	cmd.Dir = local
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+
+	cmd = exec.Command("git", "merge", "origin/master")
+	cmd.Dir = local
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+
+	return getHead(local)
 }
 
-func clone(url, dest string) error {
-	cloneCmd := exec.Command("git", "clone", url, dest)
-	cloneCmd.Stderr = os.Stderr
-	cloneCmd.Stdout = os.Stdout
-	return cloneCmd.Run()
+func clone(url, dest string) (head string, err error) {
+	cmd := exec.Command("git", "clone", url, dest)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+
+	return getHead(dest)
+}
+
+func getHead(local string) (head string, err error) {
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	cmd.Dir = local
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err == nil {
+		return out.String(), nil
+	}
+
+	return "", err
 }
