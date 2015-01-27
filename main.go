@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/emicklei/go-restful"
@@ -73,6 +76,11 @@ func startBuilder(shutdown chan bool, hostport string) {
 
 			for k, repo := range repos {
 				fmt.Printf("key: %v, repo: %+v\n", k, repo)
+
+				if err := checkout(k, repo); err != nil {
+					fmt.Printf("Error checking %v: %v\n", k, err)
+					continue
+				}
 			}
 		}
 		shutdown <- true
@@ -101,4 +109,29 @@ func listRepos(hostport string) (repos map[string]Repo, err error) {
 	}
 
 	return repos, nil
+}
+
+func checkout(id string, r Repo) error {
+	if r.URL == "" {
+		return fmt.Errorf("Repo has empty URL")
+	}
+
+	local := filepath.Join(os.TempDir(), "builder", id)
+
+	if _, err := os.Stat(filepath.Join(local, ".git")); os.IsNotExist(err) {
+		return clone(r.URL, local)
+	}
+
+	if err := os.MkdirAll(local, 0755); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func clone(url, dest string) error {
+	cloneCmd := exec.Command("git", "clone", url, dest)
+	cloneCmd.Stderr = os.Stderr
+	cloneCmd.Stdout = os.Stdout
+	return cloneCmd.Run()
 }

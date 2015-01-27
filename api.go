@@ -83,20 +83,23 @@ func (r RepoResource) findAllRepos(request *restful.Request, response *restful.R
 	response.WriteEntity(repos)
 }
 
+func writeErrorResponse(response *restful.Response, code int, message string) {
+	response.AddHeader("Content-Type", "text/plain")
+	response.WriteErrorString(code, message)
+}
+
 func (r RepoResource) findRepo(request *restful.Request, response *restful.Response) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	if err := loadRepos(); err != nil {
-		response.AddHeader("Content-Type", "text/plain")
-		response.WriteErrorString(http.StatusInternalServerError, "500: "+err.Error())
+		writeErrorResponse(response, http.StatusInternalServerError, err.Error())
 		return
 	}
 	id := request.PathParameter("repo-id")
 	repo := repos[id]
 	if len(repo.URL) == 0 {
-		response.AddHeader("Content-Type", "text/plain")
-		response.WriteErrorString(http.StatusNotFound, "404: Repo could not be found.")
+		writeErrorResponse(response, http.StatusNotFound, "Repo could not be found.")
 		return
 	}
 	response.WriteEntity(repo)
