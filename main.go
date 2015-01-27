@@ -85,6 +85,12 @@ func startBuilder(shutdown chan bool, hostport string) {
 				}
 
 				fmt.Printf("%v is at %v\n", k, head)
+
+				if repo.LastCommit != head {
+					repo.LastCommit = head
+					// TODO : post
+				}
+
 			}
 		}
 		shutdown <- true
