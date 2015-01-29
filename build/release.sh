@@ -7,27 +7,11 @@
 #
 
 PROJECT_ROOT=$(dirname "${BASH_SOURCE}")/..
-GCR_PUSH=$(which gcr-push.sh)
+GCR_PUSH="${PROJECT_ROOT}/build/gcr-push.sh"
 
 set -o errexit
 set -o nounset
 set -o pipefail
-
-if [ -z $GCR_PUSH ]; then
-  echo "gcr-push.sh not found on path, looking for CONF_ROOT"
-  if [ -z $CONF_ROOT ]; then
-    echo "CONF_ROOT not defined"
-    echo "Please add core_conf/bin to your PATH or specify CONF_ROOT"
-    exit 1
-  else
-    GCR_PUSH="${CONF_ROOT}/bin/gcr-push.sh"
-  fi
-fi
-
-if [ ! -x $GCR_PUSH ]; then
-  echo "${GCR_PUSH} not found or not executable!"
-  exit 1
-fi
 
 source "${PROJECT_ROOT}/build/common.sh"
 
