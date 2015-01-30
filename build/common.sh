@@ -35,7 +35,14 @@ init() {
 # Builds the "base build" docker image (containing the golang runtime, godep, and and all the
 # restored Godeps for this repo).
 build_base_docker_image() {
-  echo -en "${LIGHT_GREEN}Building ${NS}/build...${NC}"
+
+  baseImage=$(grep -E "^FROM " ./build/Dockerfile | awk '{print $2}')
+  if [ ! -z "$baseImage" ]; then
+    echo -e "${GREEN}Pulling base docker container ${baseImage}...${NC}"
+    docker pull $baseImage
+  fi
+
+  echo -e "${LIGHT_GREEN}Building ${NS}/build...${NC}"
   docker build ${DOCKER_ARGS} -t ${NS}/build ./build
   tag_docker_image ${NS}/build latest
 }
@@ -71,6 +78,12 @@ build_docker_image() {
   # the Dockerfile for the app.
   echo -e "${LIGHT_GREEN}Building golang binary using ${NS}/build container...${NC}"
   docker run --rm -v "$(pwd)":/go/src/${PREFIX} -t ${NS}/build $PREFIX $target
+
+  baseImage=$(grep -E "^FROM " ./Dockerfile | awk '{print $2}')
+  if [ ! -z "$baseImage" ]; then
+    echo -e "${GREEN}Pulling base docker container ${baseImage}...${NC}"
+    docker pull $baseImage
+  fi
 
   echo -e "${LIGHT_GREEN}Building docker container ${image_name}:${GIT_VERSION}...${NC}"
   docker build $DOCKER_ARGS -t $image_name:$GIT_VERSION .
