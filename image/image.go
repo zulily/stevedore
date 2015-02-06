@@ -32,14 +32,15 @@ func versionToTag(version string) string {
 	return version[0:8]
 }
 
+// Build creates a docker image as specified by the Dockerfile in the repo root
+// path.
 func Build(r *repo.Repo, version string) (name string, err error) {
 	dockerfile := filepath.Join(r.LocalPath(), "Dockerfile")
 	if _, err := os.Stat(dockerfile); err != nil {
 		if os.IsNotExist(err) {
 			return "", fmt.Errorf("Cannot build %s, no Dockerfile found in root of repository", r.URL)
-		} else {
-			return "", err
 		}
+		return "", err
 	}
 
 	nameAndTag := imageName(r) + ":" + versionToTag(version)
@@ -52,6 +53,7 @@ func Build(r *repo.Repo, version string) (name string, err error) {
 	return nameAndTag, nil
 }
 
+// Publish pushes a local docker image to its registry via `gcloud preview docker push`.
 func Publish(image string) error {
 	publishCmd := prepareGcloudCommand("gcloud", "preview", "docker", "push", image)
 	return publishCmd.Run()

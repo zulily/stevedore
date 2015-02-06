@@ -25,12 +25,15 @@ type Repo struct {
 	LastCommit string
 }
 
+// LocalPath returns the location on the local file-system where this repo will
+// be synced.
 func (r *Repo) LocalPath() string {
 	id := strings.Replace(r.URL, "/", "_", -1)
 	local := filepath.Join(os.TempDir(), "builder", id)
 	return local
 }
 
+// All returns all repositories that Stevedore needs to sync and build.
 func All() ([]*Repo, error) {
 	mu.Lock()
 	defer mu.Unlock()
@@ -46,6 +49,7 @@ func All() ([]*Repo, error) {
 	return repos, nil
 }
 
+// Save updates the Stevedore configuration.
 func (r *Repo) Save() error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -59,6 +63,8 @@ func (r *Repo) Save() error {
 	return ioutil.WriteFile(jsonFile, bytes, 0644)
 }
 
+// Checkout clones or fetches latest code from a remote repo, ensures the local
+// copy is pointed at origin/master, and returns the SHA of the head revision.
 func (r *Repo) Checkout() (head string, err error) {
 	if r.URL == "" {
 		return "", fmt.Errorf("Repo has empty URL")
