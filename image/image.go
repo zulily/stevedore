@@ -28,6 +28,23 @@ func versionToTag(version string) string {
 	return version[0:8]
 }
 
+func Make(r *repo.Repo) error {
+	makefile := filepath.Join(r.LocalPath(), "Makefile")
+	if _, err := os.Stat(makefile); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	makeCmd := prepareMakeCommand(r.LocalPath(), "make")
+	if err := makeCmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Build creates a docker image as specified by the Dockerfile in the repo root
 // path.
 func Build(r *repo.Repo, version, registry string) (name string, err error) {
@@ -53,6 +70,15 @@ func Build(r *repo.Repo, version, registry string) (name string, err error) {
 func Publish(image string) error {
 	publishCmd := prepareGcloudCommand("gcloud", "preview", "docker", "push", image)
 	return publishCmd.Run()
+}
+
+func prepareMakeCommand(path, cmd string, args ...string) *exec.Cmd {
+	c := exec.Command(cmd, args...)
+	c.Dir = path
+	c.Stdout = ioutil.Discard
+	// c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	return c
 }
 
 func prepareDockerCommand(path, cmd string, args ...string) *exec.Cmd {

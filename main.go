@@ -82,6 +82,11 @@ func checkRepo(r *repo.Repo, registry string) {
 
 	if r.SHA != head {
 		printInfo(fmt.Sprintf("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head))
+		if err := image.Make(r); err != nil {
+			printErr(fmt.Sprintf("Error making %s: %v", r.URL, err))
+			return
+		}
+
 		if img, err := image.Build(r, head, registry); err == nil {
 			printInfo(fmt.Sprintf("%s version %s has been built", r.URL, head))
 			if err := image.Publish(img); err == nil {

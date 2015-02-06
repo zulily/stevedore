@@ -34,7 +34,7 @@ type Repo struct {
 // LocalPath returns the location on the local file-system where this repo will
 // be synced.
 func (r *Repo) LocalPath() string {
-	id := strings.Replace(r.URL, "/", "_", -1)
+	id := strings.NewReplacer("https://", "", "http://", "", "/", "_", ":", "_").Replace(r.URL)
 	wd, err := os.Getwd()
 	if err != nil {
 		wd = os.TempDir()
