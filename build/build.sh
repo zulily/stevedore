@@ -13,4 +13,4 @@ set -o pipefail
 PROJECT_ROOT=$(dirname "${BASH_SOURCE}")/..
 source "${PROJECT_ROOT}/build/common.sh"
 
-build_go_binary
+build_go_binary stevedore

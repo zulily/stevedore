@@ -101,9 +101,11 @@ tag_docker_image() {
 }
 
 build_go_binary() {
-  echo -e "${LIGHT_GREEN}Building and installing target: ${PREFIX}${NC}"
-  godep go install -v $PREFIX
-  # TODO: test exit codes
+  local target=$1
+  # Build the binary, using our "${NS}/build" docker container.  The binary will be placed next to
+  # the Dockerfile for the app.
+  echo -e "${LIGHT_GREEN}Building golang binary using ${NS}/build container...${NC}"
+  docker run --rm -v "$(pwd)":/go/src/${PREFIX} -t ${NS}/build $PREFIX $target
 }
 
 test_go_project() {

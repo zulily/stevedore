@@ -25,7 +25,7 @@ init:
 # Example:
 #   make
 #   make build
-build:
+build: init
 	build/build.sh
 .PHONY: build
 
@@ -41,7 +41,7 @@ test: build
 #
 # Example:
 #   make dockerize
-dockerize: init build test
+dockerize: build test
 		build/dockerize.sh
 .PHONY: dockerize
 
