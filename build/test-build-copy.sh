@@ -3,7 +3,7 @@
 # AUTO GENERATED FROM CORE/BOILERPLATE. IF YOU WISH TO MAKE ANY CHANGES PLEASE PUSH THEM THERE
 # AND REBUILD THIS FILE WITH
 #
-#   $ init.sh core-gitlab.corp.zulily.com core build
+#   $ init.sh core-gitlab.corp.zulily.com core stevedore
 #
 # Runs test for a golang package, then builds a statically-linked binary with no C dependencies or
 # debugging info, from a golang package path.  The package must contain a "main".
@@ -27,7 +27,7 @@ godep go test -v $PKG
 #
 # The following is basically the bash equivalent of the 'basename' command, but it works on any
 # string, not just a path.  Example: "foobar/the/pkg" => "pkg"
-echo "outputting to: ./build-server"
+echo "outputting to: ./stevedore"
 
 # Build a true, statically-linked binary, with debug info removed, sending the output to the configured path
-CGO_ENABLED=0 godep go build -o ./build-server -a -tags netgo -ldflags -s $PKG
+CGO_ENABLED=0 godep go build -o ./stevedore -a -tags netgo -ldflags -s $PKG

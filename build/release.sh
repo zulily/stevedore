@@ -3,7 +3,7 @@
 # AUTO GENERATED FROM CORE/BOILERPLATE. IF YOU WISH TO MAKE ANY CHANGES PLEASE PUSH THEM THERE
 # AND REBUILD THIS FILE WITH
 #
-#   $ init.sh core-gitlab.corp.zulily.com core build
+#   $ init.sh core-gitlab.corp.zulily.com core stevedore
 #
 
 PROJECT_ROOT=$(dirname "${BASH_SOURCE}")/..
@@ -21,8 +21,8 @@ source "${PROJECT_ROOT}/build/common.sh"
 #   images=("core/foobar" "core/hello-world")
 #   push_images images[@]
 push_images() {
-  echo "Pushing version ${GIT_VERSION} of core/builder to docker repository..."
-  $GCR_PUSH -t core/builder -v $GIT_VERSION
+  echo "Pushing version ${GIT_VERSION} of core/stevedore to docker repository..."
+  $GCR_PUSH -t core/stevedore -v $GIT_VERSION
 }
 
 push_images

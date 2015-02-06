@@ -2,7 +2,7 @@
 # AUTO GENERATED FROM CORE/BOILERPLATE. IF YOU WISH TO MAKE ANY CHANGES PLEASE PUSH THEM THERE
 # AND REBUILD THIS FILE WITH
 #
-#   $ init.sh core-gitlab.corp.zulily.com core build
+#   $ init.sh core-gitlab.corp.zulily.com core stevedore
 #
 # Old-skool build tools.
 #

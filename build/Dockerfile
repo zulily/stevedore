@@ -2,7 +2,7 @@
 # AUTO GENERATED FROM CORE/BOILERPLATE. IF YOU WISH TO MAKE ANY CHANGES PLEASE PUSH THEM THERE
 # AND REBUILD THIS FILE WITH
 #
-#   $ init.sh core-gitlab.corp.zulily.com core build
+#   $ init.sh core-gitlab.corp.zulily.com core stevedore
 #
 # core/build - builds golang binaries using a pre-built/configured set of golang dependencies
 #
@@ -14,7 +14,7 @@
 #
 # Example:
 #
-#  docker run --rm -v "$(pwd)":/go/src/core-gitlab.corp.zulily.com/core/build -t core/build core-gitlab.corp.zulily.com/core/build
+#  docker run --rm -v "$(pwd)":/go/src/core-gitlab.corp.zulily.com/core/stevedore -t core/build core-gitlab.corp.zulily.com/core/stevedore
 #
 FROM       golang:latest
 MAINTAINER Core Engineering <core@zulily.com>
@@ -24,7 +24,7 @@ RUN        go get github.com/tools/godep
 
 # Set up a $GOPATH, restore all necessary deps into the $GOPATH
 ENV        GOPATH /go/
-ENV        GO_PKG core-gitlab.corp.zulily.com/core/build
+ENV        GO_PKG core-gitlab.corp.zulily.com/core/stevedore
 WORKDIR    $GOPATH/src/$GO_PKG
 
 # Wrapper script will perform the builds when the container is invoked
