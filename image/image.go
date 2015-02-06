@@ -11,11 +11,7 @@ import (
 	"core-gitlab.corp.zulily.com/core/stevedore/repo"
 )
 
-var (
-	registry = "gcr.io/eternal_empire_754"
-)
-
-func imageName(r *repo.Repo) string {
+func imageName(r *repo.Repo, registry string) string {
 	urlTokens := strings.Split(strings.TrimSuffix(r.URL, ".git"), "/")
 	imgTokens := []string{registry}
 	imgTokens = append(imgTokens, urlTokens[3:]...)
@@ -34,7 +30,7 @@ func versionToTag(version string) string {
 
 // Build creates a docker image as specified by the Dockerfile in the repo root
 // path.
-func Build(r *repo.Repo, version string) (name string, err error) {
+func Build(r *repo.Repo, version, registry string) (name string, err error) {
 	dockerfile := filepath.Join(r.LocalPath(), "Dockerfile")
 	if _, err := os.Stat(dockerfile); err != nil {
 		if os.IsNotExist(err) {
@@ -43,7 +39,7 @@ func Build(r *repo.Repo, version string) (name string, err error) {
 		return "", err
 	}
 
-	nameAndTag := imageName(r) + ":" + versionToTag(version)
+	nameAndTag := imageName(r, registry) + ":" + versionToTag(version)
 
 	buildCmd := prepareDockerCommand(r.LocalPath(), "docker", "build", "-t", nameAndTag, ".")
 	if err := buildCmd.Run(); err != nil {

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"core-gitlab.corp.zulily.com/core/stevedore/Godeps/_workspace/src/github.com/mgutz/ansi"
 	"core-gitlab.corp.zulily.com/core/stevedore/image"
 	"core-gitlab.corp.zulily.com/core/stevedore/repo"
-	"github.com/mgutz/ansi"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 )
 
 func printTask(msg string) {
-	fmt.Println(taskColor, msg, reset)
+	// fmt.Println(taskColor, msg, reset)
 }
 
 func printErr(msg string) {
@@ -57,18 +57,18 @@ func startBuilder(shutdown chan bool) {
 
 func check() {
 	printTask("Checking repos.")
-	repos, err := repo.All()
+	repos, registry, err := repo.All()
 	if err != nil {
 		printErr(err.Error())
 		return
 	}
 
 	for _, repo := range repos {
-		checkRepo(repo)
+		checkRepo(repo, registry)
 	}
 }
 
-func checkRepo(r *repo.Repo) {
+func checkRepo(r *repo.Repo, registry string) {
 	if strings.Index(r.URL, "http") != 0 {
 		printWarn(fmt.Sprintf("Skipping %s, only http[s] is supported", r.URL))
 		return
@@ -80,13 +80,14 @@ func checkRepo(r *repo.Repo) {
 		return
 	}
 
-	if r.LastCommit != head {
-		printInfo(fmt.Sprintf("%s has been updated from %s to %s. Starting a new build.", r.URL, r.LastCommit, head))
-		if img, err := image.Build(r, head); err == nil {
+	if r.SHA != head {
+		printInfo(fmt.Sprintf("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head))
+		if img, err := image.Build(r, head, registry); err == nil {
 			printInfo(fmt.Sprintf("%s version %s has been built", r.URL, head))
 			if err := image.Publish(img); err == nil {
 				printInfo(fmt.Sprintf("%s has been published to %s", r.URL, img))
-				r.LastCommit = head
+				r.SHA = head
+				r.Image = img
 				if err := r.Save(); err != nil {
 					printErr(fmt.Sprintf("Error updating %s: %v", r.URL, err))
 				}

@@ -15,38 +15,48 @@ import (
 
 var (
 	// mu guards access to repos (and other data structures eventually)
-	mu    sync.Mutex
-	repos []*Repo
+	mu  sync.Mutex
+	cfg Config
 )
+
+type Config struct {
+	RegistryURL string  `json:"registryUrl"`
+	Repos       []*Repo `json:"repos"`
+}
 
 // Repo represents a git source code repository.
 type Repo struct {
-	URL        string
-	LastCommit string
+	URL   string `json:"url"`
+	SHA   string `json:"sha"`
+	Image string `json:"image"`
 }
 
 // LocalPath returns the location on the local file-system where this repo will
 // be synced.
 func (r *Repo) LocalPath() string {
 	id := strings.Replace(r.URL, "/", "_", -1)
-	local := filepath.Join(os.TempDir(), "builder", id)
+	wd, err := os.Getwd()
+	if err != nil {
+		wd = os.TempDir()
+	}
+	local := filepath.Join(wd, "builds", id)
 	return local
 }
 
 // All returns all repositories that Stevedore needs to sync and build.
-func All() ([]*Repo, error) {
+func All() ([]*Repo, string, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	jsonFile := filepath.Clean("./repos.json")
 	file, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	repos = []*Repo{}
-	json.Unmarshal(file, &repos)
-	return repos, nil
+	cfg = Config{}
+	json.Unmarshal(file, &cfg)
+	return cfg.Repos, cfg.RegistryURL, nil
 }
 
 // Save updates the Stevedore configuration.
@@ -54,7 +64,7 @@ func (r *Repo) Save() error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	bytes, err := json.Marshal(repos)
+	bytes, err := json.MarshalIndent(cfg, "", "\t")
 	if err != nil {
 		return err
 	}
@@ -123,6 +133,6 @@ func prepareGitCommand(dir, cmd string, args ...string) *exec.Cmd {
 	c.Env = []string{"GIT_SSL_NO_VERIFY=true"}
 	c.Dir = dir
 	c.Stdout = ioutil.Discard
-	c.Stderr = os.Stderr
+	c.Stderr = ioutil.Discard
 	return c
 }
