@@ -11,27 +11,61 @@ import (
 )
 
 var (
-	taskColor = ansi.ColorCode("blue+h:black")
-	errColor  = ansi.ColorCode("red+hb:black")
-	warnColor = ansi.ColorCode("yellow:black")
-	infoColor = ansi.ColorCode("white:black")
-	reset     = ansi.ColorCode("reset")
+	taskColor       = ansi.ColorCode("blue:black")
+	brightTaskColor = ansi.ColorCode("blue+h:black")
+	errColor        = ansi.ColorCode("red:black")
+	brightErrColor  = ansi.ColorCode("red+h:black")
+	warnColor       = ansi.ColorCode("yellow:black")
+	brightWarnColor = ansi.ColorCode("yellow+h:black")
+	infoColor       = ansi.ColorCode("white:black")
+	brightInfoColor = ansi.ColorCode("white+h:black")
+	reset           = ansi.ColorCode("reset")
 )
 
-func printTask(msg string) {
-	// fmt.Println(taskColor, msg, reset)
+func printTask(msg string, args ...string) {
+	if len(args) == 0 {
+		fmt.Println(taskColor, msg, reset)
+	} else {
+		colored := colorArgs(args, brightTaskColor, taskColor)
+		fmt.Printf(msg+"\n", colored...)
+	}
 }
 
-func printErr(msg string) {
+func printErr(msg string, args ...string) {
 	fmt.Println(errColor, msg, reset)
+	if len(args) == 0 {
+		fmt.Println(errColor, msg, reset)
+	} else {
+		colored := colorArgs(args, brightErrColor, errColor)
+		fmt.Printf(msg+"\n", colored...)
+	}
 }
 
-func printWarn(msg string) {
+func printWarn(msg string, args ...string) {
 	fmt.Println(warnColor, msg, reset)
+	if len(args) == 0 {
+		fmt.Println(warnColor, msg, reset)
+	} else {
+		colored := colorArgs(args, brightWarnColor, warnColor)
+		fmt.Printf(msg+"\n", colored...)
+	}
 }
 
-func printInfo(msg string) {
-	fmt.Println(infoColor, msg, reset)
+func printInfo(msg string, args ...string) {
+	if len(args) == 0 {
+		fmt.Println(infoColor, msg, reset)
+	} else {
+		colored := colorArgs(args, brightInfoColor, infoColor)
+		fmt.Printf(msg+"\n", colored...)
+	}
+}
+
+func colorArgs(args []string, color, reset string) []interface{} {
+	var colored []interface{}
+	for _, v := range args {
+		colored = append(colored, color+v+reset)
+	}
+	return colored
 }
 
 var (
@@ -81,16 +115,16 @@ func checkRepo(r *repo.Repo, registry string) {
 	}
 
 	if r.SHA != head {
-		printInfo(fmt.Sprintf("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head))
+		printInfo("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head)
 		if err := image.Make(r); err != nil {
 			printErr(fmt.Sprintf("Error making %s: %v", r.URL, err))
 			return
 		}
 
 		if img, err := image.Build(r, head, registry); err == nil {
-			printInfo(fmt.Sprintf("%s version %s has been built", r.URL, head))
+			printInfo("%s version %s has been built", r.URL, head)
 			if err := image.Publish(img); err == nil {
-				printInfo(fmt.Sprintf("%s has been published to %s", r.URL, img))
+				printInfo("%s has been published to %s", r.URL, img)
 				r.SHA = head
 				r.Image = img
 				if err := r.Save(); err != nil {
