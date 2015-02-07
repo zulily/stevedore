@@ -21,8 +21,8 @@ func foobar() {
 	fmt.Printf("%d%s", 123)
 }
 
-// This is a terrible comment, and should be caught by golint
-// This line won't help either.
+// This is a non-idomatic comment, and should be caught by golint.
+// This line won't help fix it.
 type Writer struct {
 	w      io.Writer
 	length int
