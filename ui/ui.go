@@ -16,7 +16,7 @@ func init() {
 	width, _, _ = terminal.GetSize(0)
 }
 
-// This is a terrible comment
+// This is a terrible comment, and should be caught by golint
 type Writer struct {
 	w      io.Writer
 	length int
