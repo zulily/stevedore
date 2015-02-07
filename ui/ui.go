@@ -16,6 +16,7 @@ func init() {
 	width, _, _ = terminal.GetSize(0)
 }
 
+// This is a terrible comment
 type Writer struct {
 	w      io.Writer
 	length int
