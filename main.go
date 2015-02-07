@@ -73,13 +73,11 @@ var (
 )
 
 func main() {
-	go func() {
-		for {
-			check()
-			printTask(fmt.Sprintf("Sleeping for %s...", sleepDuration))
-			time.Sleep(sleepDuration)
-		}
-	}()
+	for {
+		check()
+		printTask(fmt.Sprintf("Sleeping for %s...", sleepDuration))
+		time.Sleep(sleepDuration)
+	}
 }
 
 func check() {
