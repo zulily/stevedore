@@ -11,14 +11,14 @@ import (
 )
 
 var (
-	taskColor       = ansi.ColorCode("blue:black")
-	brightTaskColor = ansi.ColorCode("blue+h:black")
-	errColor        = ansi.ColorCode("red:black")
-	brightErrColor  = ansi.ColorCode("red+h:black")
-	warnColor       = ansi.ColorCode("yellow:black")
-	brightWarnColor = ansi.ColorCode("yellow+h:black")
-	infoColor       = ansi.ColorCode("white:black")
-	brightInfoColor = ansi.ColorCode("cyan+h:black")
+	taskColor       = ansi.ColorCode("blue+h")
+	brightTaskColor = ansi.ColorCode("white+h")
+	errColor        = ansi.ColorCode("red")
+	brightErrColor  = ansi.ColorCode("red+h")
+	warnColor       = ansi.ColorCode("yellow")
+	brightWarnColor = ansi.ColorCode("yellow+h")
+	infoColor       = ansi.ColorCode("white")
+	brightInfoColor = ansi.ColorCode("cyan+h")
 	reset           = ansi.ColorCode("reset")
 )
 
