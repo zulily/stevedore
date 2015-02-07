@@ -28,6 +28,8 @@ func versionToTag(version string) string {
 	return version[0:8]
 }
 
+// Make will run the `make` command in the repository root directory if there
+// is a Makefile there.
 func Make(r *repo.Repo) error {
 	makefile := filepath.Join(r.LocalPath(), "Makefile")
 	if _, err := os.Stat(makefile); err != nil {

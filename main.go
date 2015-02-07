@@ -73,19 +73,12 @@ var (
 )
 
 func main() {
-	shutdown := make(chan bool)
-	startBuilder(shutdown)
-	<-shutdown
-}
-
-func startBuilder(shutdown chan bool) {
 	go func() {
 		for {
 			check()
 			printTask(fmt.Sprintf("Sleeping for %s...", sleepDuration))
 			time.Sleep(sleepDuration)
 		}
-		shutdown <- true
 	}()
 }
 

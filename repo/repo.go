@@ -21,6 +21,7 @@ var (
 	cfg Config
 )
 
+// Config wraps the entire contents of the "repos.json" file.
 type Config struct {
 	RegistryURL string  `json:"registryUrl"`
 	Repos       []*Repo `json:"repos"`
