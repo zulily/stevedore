@@ -2,7 +2,6 @@ package ui
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"strings"
 
@@ -17,12 +16,6 @@ func init() {
 	width, _, _ = terminal.GetSize(0)
 }
 
-func foobar() {
-	fmt.Printf("%d%s", 123)
-}
-
-// This is a non-idomatic comment, and should be caught by golint.
-// This line won't help fix it.
 type Writer struct {
 	w      io.Writer
 	length int
