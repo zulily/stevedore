@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"core-gitlab.corp.zulily.com/core/stevedore/ui"
 )
 
 var (
@@ -132,7 +134,7 @@ func prepareGitCommand(dir, cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
 	c.Env = []string{"GIT_SSL_NO_VERIFY=true"}
 	c.Dir = dir
-	c.Stdout = ioutil.Discard
-	c.Stderr = ioutil.Discard
+	c.Stdout = ui.Wrap(os.Stdout)
+	c.Stderr = c.Stdout
 	return c
 }

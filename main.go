@@ -18,7 +18,7 @@ var (
 	warnColor       = ansi.ColorCode("yellow:black")
 	brightWarnColor = ansi.ColorCode("yellow+h:black")
 	infoColor       = ansi.ColorCode("white:black")
-	brightInfoColor = ansi.ColorCode("white+h:black")
+	brightInfoColor = ansi.ColorCode("cyan+h:black")
 	reset           = ansi.ColorCode("reset")
 )
 

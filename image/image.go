@@ -2,13 +2,13 @@ package image
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"core-gitlab.corp.zulily.com/core/stevedore/repo"
+	"core-gitlab.corp.zulily.com/core/stevedore/ui"
 )
 
 func imageName(r *repo.Repo, registry string) string {
@@ -75,25 +75,22 @@ func Publish(image string) error {
 func prepareMakeCommand(path, cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
 	c.Dir = path
-	c.Stdout = ioutil.Discard
-	// c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
+	c.Stdout = ui.Wrap(os.Stdout)
+	c.Stderr = c.Stdout
 	return c
 }
 
 func prepareDockerCommand(path, cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
 	c.Dir = path
-	c.Stdout = ioutil.Discard
-	// c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
+	c.Stdout = ui.Wrap(os.Stdout)
+	c.Stderr = c.Stdout
 	return c
 }
 
 func prepareGcloudCommand(cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
-	c.Stdout = ioutil.Discard
-	// c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
+	c.Stdout = ui.Wrap(os.Stdout)
+	c.Stderr = c.Stdout
 	return c
 }
