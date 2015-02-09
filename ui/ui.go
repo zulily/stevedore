@@ -2,9 +2,11 @@ package ui
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 
+	"github.com/mgutz/ansi"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -38,4 +40,62 @@ func (w Writer) Write(p []byte) (int, error) {
 	p = bytes.Replace(p, []byte("\n"), []byte("\r"), -1)
 	p = bytes.Replace(p, []byte("\t"), []byte(" "), -1)
 	return w.w.Write(p)
+}
+
+var (
+	taskColor       = ansi.ColorCode("blue+h")
+	brightTaskColor = ansi.ColorCode("white+h")
+	errColor        = ansi.ColorCode("red")
+	brightErrColor  = ansi.ColorCode("red+h")
+	warnColor       = ansi.ColorCode("yellow")
+	brightWarnColor = ansi.ColorCode("yellow+h")
+	infoColor       = ansi.ColorCode("white")
+	brightInfoColor = ansi.ColorCode("cyan+h")
+	reset           = ansi.ColorCode("reset")
+)
+
+func Task(msg string, args ...string) {
+	if len(args) == 0 {
+		fmt.Println(taskColor, msg, reset)
+		return
+	}
+	colored := colorArgs(args, brightTaskColor, taskColor)
+	fmt.Printf(msg+"\n", colored...)
+}
+
+func Err(msg string, args ...string) {
+	fmt.Println(errColor, msg, reset)
+	if len(args) == 0 {
+		fmt.Println(errColor, msg, reset)
+		return
+	}
+	colored := colorArgs(args, brightErrColor, errColor)
+	fmt.Printf(msg+"\n", colored...)
+}
+
+func Warn(msg string, args ...string) {
+	fmt.Println(warnColor, msg, reset)
+	if len(args) == 0 {
+		fmt.Println(warnColor, msg, reset)
+		return
+	}
+	colored := colorArgs(args, brightWarnColor, warnColor)
+	fmt.Printf(msg+"\n", colored...)
+}
+
+func Info(msg string, args ...string) {
+	if len(args) == 0 {
+		fmt.Println(infoColor, msg, reset)
+	} else {
+		colored := colorArgs(args, brightInfoColor, infoColor)
+		fmt.Printf(msg+"\n", colored...)
+	}
+}
+
+func colorArgs(args []string, color, reset string) []interface{} {
+	var colored []interface{}
+	for _, v := range args {
+		colored = append(colored, color+v+reset)
+	}
+	return colored
 }
