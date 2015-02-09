@@ -25,30 +25,30 @@ var (
 func printTask(msg string, args ...string) {
 	if len(args) == 0 {
 		fmt.Println(taskColor, msg, reset)
-	} else {
-		colored := colorArgs(args, brightTaskColor, taskColor)
-		fmt.Printf(msg+"\n", colored...)
+		return
 	}
+	colored := colorArgs(args, brightTaskColor, taskColor)
+	fmt.Printf(msg+"\n", colored...)
 }
 
 func printErr(msg string, args ...string) {
 	fmt.Println(errColor, msg, reset)
 	if len(args) == 0 {
 		fmt.Println(errColor, msg, reset)
-	} else {
-		colored := colorArgs(args, brightErrColor, errColor)
-		fmt.Printf(msg+"\n", colored...)
+		return
 	}
+	colored := colorArgs(args, brightErrColor, errColor)
+	fmt.Printf(msg+"\n", colored...)
 }
 
 func printWarn(msg string, args ...string) {
 	fmt.Println(warnColor, msg, reset)
 	if len(args) == 0 {
 		fmt.Println(warnColor, msg, reset)
-	} else {
-		colored := colorArgs(args, brightWarnColor, warnColor)
-		fmt.Printf(msg+"\n", colored...)
+		return
 	}
+	colored := colorArgs(args, brightWarnColor, warnColor)
+	fmt.Printf(msg+"\n", colored...)
 }
 
 func printInfo(msg string, args ...string) {
@@ -105,27 +105,31 @@ func checkRepo(r *repo.Repo, registry string) {
 		return
 	}
 
-	if r.SHA != head {
-		printInfo("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head)
-		if err := image.Make(r); err != nil {
-			printErr(fmt.Sprintf("Error making %s: %v", r.URL, err))
-			return
-		}
+	if r.SHA == head {
+		return
+	}
 
-		if img, err := image.Build(r, head, registry); err == nil {
-			printInfo("%s version %s has been built", r.URL, head)
-			if err := image.Publish(img); err == nil {
-				printInfo("%s has been published to %s", r.URL, img)
-				r.SHA = head
-				r.Image = img
-				if err := r.Save(); err != nil {
-					printErr(fmt.Sprintf("Error updating %s: %v", r.URL, err))
-				}
-			} else {
-				printErr(fmt.Sprintf("Error publishing %s: %v", r.URL, err))
-			}
-		} else {
-			printErr(fmt.Sprintf("Error building %s: %v", r.URL, err))
-		}
+	printInfo("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head)
+	if err := image.Make(r); err != nil {
+		printErr(fmt.Sprintf("Error making %s: %v", r.URL, err))
+		return
+	}
+
+	img, err := image.Build(r, head, registry)
+	if err != nil {
+		printErr(fmt.Sprintf("Error building %s: %v", r.URL, err))
+		return
+	}
+
+	printInfo("%s version %s has been built", r.URL, head)
+	if err := image.Publish(img); err != nil {
+		printErr(fmt.Sprintf("Error publishing %s: %v", r.URL, err))
+		return
+	}
+	printInfo("%s has been published to %s", r.URL, img)
+	r.SHA = head
+	r.Image = img
+	if err := r.Save(); err != nil {
+		printErr(fmt.Sprintf("Error updating %s: %v", r.URL, err))
 	}
 }

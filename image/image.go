@@ -39,7 +39,7 @@ func Make(r *repo.Repo) error {
 		return err
 	}
 
-	makeCmd := prepareMakeCommand(r.LocalPath(), "make")
+	makeCmd := prepareCommand(r.LocalPath(), "make")
 	if err := makeCmd.Run(); err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func Build(r *repo.Repo, version, registry string) (name string, err error) {
 
 	nameAndTag := imageName(r, registry) + ":" + versionToTag(version)
 
-	buildCmd := prepareDockerCommand(r.LocalPath(), "docker", "build", "-t", nameAndTag, ".")
+	buildCmd := prepareCommand(r.LocalPath(), "docker", "build", "-t", nameAndTag, ".")
 	if err := buildCmd.Run(); err != nil {
 		return "", err
 	}
@@ -73,28 +73,17 @@ func Publish(image string) error {
 	cmdAndArgs := repo.PublishCommand(image)
 	cmd := cmdAndArgs[0]
 	args := cmdAndArgs[1:]
-	publishCmd := prepareGcloudCommand(cmd, args...)
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	publishCmd := prepareCommand(wd, cmd, args...)
 	return publishCmd.Run()
 }
 
-func prepareMakeCommand(path, cmd string, args ...string) *exec.Cmd {
+func prepareCommand(path, cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
 	c.Dir = path
-	c.Stdout = ui.Wrap(os.Stdout)
-	c.Stderr = c.Stdout
-	return c
-}
-
-func prepareDockerCommand(path, cmd string, args ...string) *exec.Cmd {
-	c := exec.Command(cmd, args...)
-	c.Dir = path
-	c.Stdout = ui.Wrap(os.Stdout)
-	c.Stderr = c.Stdout
-	return c
-}
-
-func prepareGcloudCommand(cmd string, args ...string) *exec.Cmd {
-	c := exec.Command(cmd, args...)
 	c.Stdout = ui.Wrap(os.Stdout)
 	c.Stderr = c.Stdout
 	return c
