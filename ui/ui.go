@@ -57,7 +57,7 @@ var (
 // Task formats and prints a message to console in the task color.
 func Task(msg string, args ...string) {
 	if len(args) == 0 {
-		fmt.Println(taskColor, msg, reset)
+		fmt.Println(taskColor + msg + reset)
 		return
 	}
 	colored := colorArgs(args, brightTaskColor, taskColor)
@@ -66,7 +66,7 @@ func Task(msg string, args ...string) {
 
 // Err formats and prints a message to console in the error color.
 func Err(msg string, args ...string) {
-	fmt.Println(errColor, msg, reset)
+	fmt.Println(errColor + msg + reset)
 	if len(args) == 0 {
 		fmt.Println(errColor, msg, reset)
 		return
@@ -77,7 +77,7 @@ func Err(msg string, args ...string) {
 
 // Warn formats and prints a message to console in the warning color.
 func Warn(msg string, args ...string) {
-	fmt.Println(warnColor, msg, reset)
+	fmt.Println(warnColor + msg + reset)
 	if len(args) == 0 {
 		fmt.Println(warnColor, msg, reset)
 		return
@@ -89,7 +89,7 @@ func Warn(msg string, args ...string) {
 // Info formats and prints a message to console in the info color.
 func Info(msg string, args ...string) {
 	if len(args) == 0 {
-		fmt.Println(infoColor, msg, reset)
+		fmt.Println(infoColor + msg + reset)
 	} else {
 		colored := colorArgs(args, brightInfoColor, infoColor)
 		fmt.Printf(msg+"\n", colored...)

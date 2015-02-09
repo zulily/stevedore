@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,7 +18,7 @@ var (
 func main() {
 	for {
 		updated := check()
-		ui.Task(fmt.Sprintf("%d repo images updated, built and published. Sleeping for %s...", updated, sleepDuration))
+		ui.Task("%s repo images updated, built and published. Sleeping for %s...", strconv.Itoa(updated), sleepDuration.String())
 		time.Sleep(sleepDuration)
 	}
 }
