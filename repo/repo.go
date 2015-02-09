@@ -23,8 +23,9 @@ var (
 
 // Config wraps the entire contents of the "repos.json" file.
 type Config struct {
-	RegistryURL string  `json:"registryUrl"`
-	Repos       []*Repo `json:"repos"`
+	PublishCommand []string `json:"publishCommand"`
+	RegistryURL    string   `json:"registryUrl"`
+	Repos          []*Repo  `json:"repos"`
 }
 
 // Repo represents a git source code repository.
@@ -44,6 +45,15 @@ func (r *Repo) LocalPath() string {
 	}
 	local := filepath.Join(wd, "builds", id)
 	return local
+}
+
+// PublishCommand returns the command line strings to use to publish an image.
+func PublishCommand(image string) []string {
+	if cfg.PublishCommand == nil {
+		return []string{"docker", "push", image}
+	}
+
+	return append(cfg.PublishCommand, image)
 }
 
 // All returns all repositories that Stevedore needs to sync and build.

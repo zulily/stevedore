@@ -70,7 +70,10 @@ func Build(r *repo.Repo, version, registry string) (name string, err error) {
 
 // Publish pushes a local docker image to its registry via `gcloud preview docker push`.
 func Publish(image string) error {
-	publishCmd := prepareGcloudCommand("gcloud", "preview", "docker", "push", image)
+	cmdAndArgs := repo.PublishCommand(image)
+	cmd := cmdAndArgs[0]
+	args := cmdAndArgs[1:]
+	publishCmd := prepareGcloudCommand(cmd, args...)
 	return publishCmd.Run()
 }
 
