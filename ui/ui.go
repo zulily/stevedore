@@ -54,6 +54,7 @@ var (
 	reset           = ansi.ColorCode("reset")
 )
 
+// Task formats and prints a message to console in the task color.
 func Task(msg string, args ...string) {
 	if len(args) == 0 {
 		fmt.Println(taskColor, msg, reset)
@@ -63,6 +64,7 @@ func Task(msg string, args ...string) {
 	fmt.Printf(msg+"\n", colored...)
 }
 
+// Err formats and prints a message to console in the error color.
 func Err(msg string, args ...string) {
 	fmt.Println(errColor, msg, reset)
 	if len(args) == 0 {
@@ -73,6 +75,7 @@ func Err(msg string, args ...string) {
 	fmt.Printf(msg+"\n", colored...)
 }
 
+// Warn formats and prints a message to console in the warning color.
 func Warn(msg string, args ...string) {
 	fmt.Println(warnColor, msg, reset)
 	if len(args) == 0 {
@@ -83,6 +86,7 @@ func Warn(msg string, args ...string) {
 	fmt.Printf(msg+"\n", colored...)
 }
 
+// Info formats and prints a message to console in the info color.
 func Info(msg string, args ...string) {
 	if len(args) == 0 {
 		fmt.Println(infoColor, msg, reset)
