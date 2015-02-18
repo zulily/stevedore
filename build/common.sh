@@ -18,7 +18,7 @@ source "${PROJECT_ROOT}/build/color.sh"
 
 readonly PREFIX="${REPO}/${NS}/${PROJECT}"
 
-readonly GIT_VERSION=$(git rev-parse HEAD | cut -c 1-8)
+readonly GIT_VERSION=$(git rev-parse HEAD | cut -c 1-7)
 readonly DOCKER_ARGS="--no-cache"
 
 # Installs all dependencies for the project (installing godep if not already present),

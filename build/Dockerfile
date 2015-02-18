@@ -16,7 +16,7 @@
 #
 #  docker run --rm -v "$(pwd)":/go/src/core-gitlab.corp.zulily.com/core/stevedore -t core/build core-gitlab.corp.zulily.com/core/stevedore
 #
-FROM       golang:latest
+FROM       golang:1.4.2
 MAINTAINER Core Engineering <core@zulily.com>
 
 # We manage all deps using 'godep'
