@@ -25,7 +25,7 @@ func imageName(r *repo.Repo, registry string) string {
 }
 
 func versionToTag(version string) string {
-	return version[0:8]
+	return version[0:7]
 }
 
 // Make will run the `make` command in the repository root directory if there
