@@ -7,15 +7,24 @@ import (
 	"time"
 
 	"core-gitlab.corp.zulily.com/core/stevedore/image"
+	"core-gitlab.corp.zulily.com/core/stevedore/notify"
 	"core-gitlab.corp.zulily.com/core/stevedore/repo"
 	"core-gitlab.corp.zulily.com/core/stevedore/ui"
 )
 
 var (
 	sleepDuration = 1 * time.Minute
+	notifiers     = []notify.Notifier{}
 )
 
 func main() {
+	var err error
+	notifiers, err = notify.Init()
+	if err != nil {
+		ui.Err(err.Error())
+		return
+	}
+
 	for {
 		updated := check()
 		ui.Task("%s repo images updated, built and published. Sleeping for %s...", strconv.Itoa(updated), sleepDuration.String())
@@ -73,7 +82,16 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 		ui.Err(fmt.Sprintf("Error publishing %s: %v", r.URL, err))
 		return false
 	}
-	ui.Info("%s has been published to %s", r.URL, img)
+
+	msg := fmt.Sprintf("A new image for %s has been published to %s", r.URL, img)
+	ui.Info(msg)
+
+	for _, n := range notifiers {
+		if err := n.Notify(msg); err != nil {
+			ui.Err(err.Error())
+		}
+	}
+
 	r.SHA = head
 	r.Image = img
 	if err := r.Save(); err != nil {

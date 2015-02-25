@@ -61,7 +61,7 @@ func All() ([]*Repo, string, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	jsonFile := filepath.Clean("./repos.json")
+	jsonFile := filepath.Clean("./config.json")
 	file, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
 		return nil, "", err
@@ -82,7 +82,7 @@ func (r *Repo) Save() error {
 		return err
 	}
 
-	jsonFile := filepath.Clean("./repos.json")
+	jsonFile := filepath.Clean("./config.json")
 	return ioutil.WriteFile(jsonFile, bytes, 0644)
 }
 

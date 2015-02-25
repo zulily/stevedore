@@ -1,5 +1,5 @@
 *.swp
 build-server
-repos.json
+config.json
 builds
 stevedore
