@@ -12,24 +12,30 @@ import (
 	"time"
 
 	"core-gitlab.corp.zulily.com/core/stevedore/image"
-	"core-gitlab.corp.zulily.com/core/stevedore/notify"
 	"core-gitlab.corp.zulily.com/core/stevedore/repo"
+	"core-gitlab.corp.zulily.com/core/stevedore/slack"
 	"core-gitlab.corp.zulily.com/core/stevedore/ui"
 )
 
 var (
 	sleepDuration = 1 * time.Minute
-	notifiers     = []notify.Notifier{}
 	cfg           config
+	notifications *slack.Slack
 )
 
 type config struct {
 	sync.Mutex
 	PublishCommand []string `json:"publishCommand"`
 	RegistryURL    string   `json:"registryUrl"`
+	Notifications  []string `json:"notifications"`
+	Slack          struct {
+		Channel  string `json:"channel"`
+		Username string `json:"username"`
+		Webhook  string `json:"webhook"`
+	}
 }
 
-func load() error {
+func loadConfig() error {
 	cfg.Lock()
 	defer cfg.Unlock()
 
@@ -39,8 +45,7 @@ func load() error {
 		return err
 	}
 
-	json.Unmarshal(file, &cfg)
-	return nil
+	return json.Unmarshal(file, &cfg)
 }
 
 // ImagePublishCommand returns the command line strings to use to publish an image.
@@ -54,14 +59,19 @@ func (c *config) ImagePublishCommand(image string) []string {
 
 func main() {
 	var err error
-	err = load()
+	err = loadConfig()
 	if err != nil {
 		ui.Err(err.Error())
 		os.Exit(1)
 	}
 
 	ui.Info("loaded config")
-	notifiers, err = notify.Init()
+
+	if contains(cfg.Notifications, "slack") && cfg.Slack.Webhook != "" {
+		notifications, err = slack.New(
+			slack.WithWebhook(cfg.Slack.Webhook),
+			slack.WithChannelAndUsername(cfg.Slack.Channel, cfg.Slack.Username))
+	}
 	if err != nil {
 		ui.Err(err.Error())
 		return
@@ -130,8 +140,8 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 		msg := fmt.Sprintf("A new image for %s has been published to %s", r.URL, img)
 		ui.Info(msg)
 
-		for _, n := range notifiers {
-			if err := n.Notify(msg); err != nil {
+		if notifications != nil {
+			if err = notifications.Notify(msg); err != nil {
 				ui.Err(err.Error())
 			}
 		}
@@ -144,4 +154,14 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 	}
 
 	return true
+}
+
+// contains returns a boolean indicating whether or not `e` is contained in `s`
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
