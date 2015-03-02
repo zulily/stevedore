@@ -15,8 +15,15 @@ var (
 	blank []byte
 )
 
+const (
+	defaultWidth = 79
+)
+
 func init() {
-	width, _, _ = terminal.GetSize(0)
+	width, _, err := terminal.GetSize(0)
+	if err != nil || !terminal.IsTerminal(0) {
+		width = defaultWidth
+	}
 	blank = []byte("\r" + strings.Repeat(" ", width) + "\r")
 }
 
