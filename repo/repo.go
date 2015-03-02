@@ -23,16 +23,14 @@ var (
 
 // Config wraps the entire contents of the "repos.json" file.
 type Config struct {
-	PublishCommand []string `json:"publishCommand"`
-	RegistryURL    string   `json:"registryUrl"`
-	Repos          []*Repo  `json:"repos"`
+	Repos []*Repo `json:"repos"`
 }
 
 // Repo represents a git source code repository.
 type Repo struct {
-	URL   string `json:"url"`
-	SHA   string `json:"sha"`
-	Image string `json:"image"`
+	URL    string   `json:"url"`
+	SHA    string   `json:"sha"`
+	Images []string `json:"images"`
 }
 
 // LocalPath returns the location on the local file-system where this repo will
@@ -47,29 +45,20 @@ func (r *Repo) LocalPath() string {
 	return local
 }
 
-// PublishCommand returns the command line strings to use to publish an image.
-func PublishCommand(image string) []string {
-	if cfg.PublishCommand == nil {
-		return []string{"docker", "push", image}
-	}
-
-	return append(cfg.PublishCommand, image)
-}
-
 // All returns all repositories that Stevedore needs to sync and build.
-func All() ([]*Repo, string, error) {
+func All() ([]*Repo, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	jsonFile := filepath.Clean("./config.json")
+	jsonFile := filepath.Clean("./repos.json")
 	file, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	cfg = Config{}
 	json.Unmarshal(file, &cfg)
-	return cfg.Repos, cfg.RegistryURL, nil
+	return cfg.Repos, nil
 }
 
 // Save updates the Stevedore configuration.
@@ -82,7 +71,7 @@ func (r *Repo) Save() error {
 		return err
 	}
 
-	jsonFile := filepath.Clean("./config.json")
+	jsonFile := filepath.Clean("./repos.json")
 	return ioutil.WriteFile(jsonFile, bytes, 0644)
 }
 

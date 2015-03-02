@@ -1,9 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"core-gitlab.corp.zulily.com/core/stevedore/image"
@@ -15,10 +20,47 @@ import (
 var (
 	sleepDuration = 1 * time.Minute
 	notifiers     = []notify.Notifier{}
+	cfg           config
 )
+
+type config struct {
+	sync.Mutex
+	PublishCommand []string `json:"publishCommand"`
+	RegistryURL    string   `json:"registryUrl"`
+}
+
+func load() error {
+	cfg.Lock()
+	defer cfg.Unlock()
+
+	jsonFile := filepath.Clean("./config.json")
+	file, err := ioutil.ReadFile(jsonFile)
+	if err != nil {
+		return err
+	}
+
+	json.Unmarshal(file, &cfg)
+	return nil
+}
+
+// ImagePublishCommand returns the command line strings to use to publish an image.
+func (c *config) ImagePublishCommand(image string) []string {
+	if c.PublishCommand == nil {
+		return []string{"docker", "push", image}
+	}
+
+	return append(c.PublishCommand, image)
+}
 
 func main() {
 	var err error
+	err = load()
+	if err != nil {
+		ui.Err(err.Error())
+		os.Exit(1)
+	}
+
+	ui.Info("loaded config")
 	notifiers, err = notify.Init()
 	if err != nil {
 		ui.Err(err.Error())
@@ -34,14 +76,14 @@ func main() {
 
 func check() (updated int) {
 	ui.Task("Checking repos.")
-	repos, registry, err := repo.All()
+	repos, err := repo.All()
 	if err != nil {
 		ui.Err(err.Error())
 		return 0
 	}
 
 	for _, repo := range repos {
-		if checkRepo(repo, registry) {
+		if checkRepo(repo, cfg.RegistryURL) {
 			updated++
 		}
 	}
@@ -71,29 +113,32 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 		return false
 	}
 
-	img, err := image.Build(r, head, registry)
+	imgs, err := image.Build(r, head, registry)
 	if err != nil {
 		ui.Err(fmt.Sprintf("Error building %s: %v", r.URL, err))
 		return false
 	}
 
-	ui.Info("%s version %s has been built", r.URL, head)
-	if err := image.Publish(img); err != nil {
-		ui.Err(fmt.Sprintf("Error publishing %s: %v", r.URL, err))
-		return false
-	}
+	for _, img := range imgs {
+		ui.Info("%s version %s has been built", r.URL, head)
 
-	msg := fmt.Sprintf("A new image for %s has been published to %s", r.URL, img)
-	ui.Info(msg)
+		if err := image.Publish(cfg.ImagePublishCommand(img)); err != nil {
+			ui.Err(fmt.Sprintf("Error publishing %s: %v", r.URL, err))
+			return false
+		}
 
-	for _, n := range notifiers {
-		if err := n.Notify(msg); err != nil {
-			ui.Err(err.Error())
+		msg := fmt.Sprintf("A new image for %s has been published to %s", r.URL, img)
+		ui.Info(msg)
+
+		for _, n := range notifiers {
+			if err := n.Notify(msg); err != nil {
+				ui.Err(err.Error())
+			}
 		}
 	}
 
 	r.SHA = head
-	r.Image = img
+	r.Images = imgs
 	if err := r.Save(); err != nil {
 		ui.Err(fmt.Sprintf("Error updating %s: %v", r.URL, err))
 	}

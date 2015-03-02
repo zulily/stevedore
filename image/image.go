@@ -11,7 +11,7 @@ import (
 	"core-gitlab.corp.zulily.com/core/stevedore/ui"
 )
 
-func imageName(r *repo.Repo, registry string) string {
+func imageName(r *repo.Repo, registry string, dockerfile string) string {
 	urlTokens := strings.Split(strings.TrimSuffix(r.URL, ".git"), "/")
 	imgTokens := []string{registry}
 	imgTokens = append(imgTokens, urlTokens[3:]...)
@@ -21,6 +21,13 @@ func imageName(r *repo.Repo, registry string) string {
 		imgTokens[2] = strings.Replace(imgTokens[2], "/", "-", -1)
 		img = strings.Join(imgTokens, "/")
 	}
+
+	fname := filepath.Base(dockerfile)
+	if strings.HasPrefix(fname, "Dockerfile.") {
+		suffix := strings.Replace(fname, "Dockerfile.", "", 1)
+		img = strings.Join([]string{img, suffix}, "-")
+	}
+
 	return img
 }
 
@@ -47,44 +54,51 @@ func Make(r *repo.Repo) error {
 	return nil
 }
 
-// Build creates a docker image as specified by the Dockerfile in the repo root
-// path.
-func Build(r *repo.Repo, version, registry string) (name string, err error) {
-	dockerfile := filepath.Join(r.LocalPath(), "Dockerfile")
-	if _, err := os.Stat(dockerfile); err != nil {
-		if os.IsNotExist(err) {
-			return "", fmt.Errorf("Cannot build %s, no Dockerfile found in root of repository", r.URL)
+// Build creates one or more docker images, as specified by the Dockerfile(s) in the repo root
+// path.  Valid Dockerfiles are either named 'Dockerfile' or use the naming convention 'Dockerfile.<SUFFIX>'
+func Build(r *repo.Repo, version, registry string) (name []string, err error) {
+
+	var names []string
+	dockerfiles, err := filepath.Glob(filepath.Join(r.LocalPath(), "Dockerfile*"))
+	if err == filepath.ErrBadPattern {
+		return names, err
+	}
+
+	if dockerfiles == nil {
+		return names, fmt.Errorf("Cannot build %s, no Dockerfile(s) found in root of repository", r.URL)
+	}
+
+	for _, dockerfile := range dockerfiles {
+		nameAndTag := imageName(r, registry, dockerfile) + ":" + versionToTag(version)
+
+		buildCmd := prepareCommand(r.LocalPath(), "docker", "build", "-f", dockerfile, "-t", nameAndTag, ".")
+
+		if err := buildCmd.Run(); err != nil {
+			return names, err
 		}
-		return "", err
+
+		names = append(names, nameAndTag)
 	}
 
-	nameAndTag := imageName(r, registry) + ":" + versionToTag(version)
-
-	buildCmd := prepareCommand(r.LocalPath(), "docker", "build", "-t", nameAndTag, ".")
-	if err := buildCmd.Run(); err != nil {
-		return "", err
-	}
-
-	return nameAndTag, nil
+	return names, nil
 }
 
 // Publish pushes a local docker image to its registry via `gcloud preview docker push`.
-func Publish(image string) error {
-	cmdAndArgs := repo.PublishCommand(image)
-	cmd := cmdAndArgs[0]
-	args := cmdAndArgs[1:]
+func Publish(publishCmd []string) error {
+	cmd := publishCmd[0]
+	args := publishCmd[1:]
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	publishCmd := prepareCommand(wd, cmd, args...)
-	return publishCmd.Run()
+	return prepareCommand(wd, cmd, args...).Run()
 }
 
 func prepareCommand(path, cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
 	c.Dir = path
 	c.Stdout = ui.Wrap(os.Stdout)
+
 	c.Stderr = c.Stdout
 	return c
 }
