@@ -1,0 +1,12 @@
+{
+	"repos": [
+		{
+			"url": "https://foobar.com/coolkids/project.git",
+			"sha": "7052a3b8d2fdf98b088ab760e5baf0730f09e62d",
+			"images": [
+				"gcr.io/your_project_name/coolkids-project:7052a3b",
+				"gcr.io/your_project_name/coolkids-project-test:7052a3b"
+			]
+		}
+	]
+}
