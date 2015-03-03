@@ -1,24 +1,17 @@
 {
-	"notifications": [
-		"slack"
-	],
-	"slack": {
-  	"channel": "#channelname",
-  	"username": "stevedore-bot",
-  	"webhook": "https://hooks.slack.com/services/<code>/<code>/<code>"
-	},
-	"publishCommand": [
-		"gcloud",
-		"preview",
-		"docker",
-		"push"
-	],
-	"registryUrl": "gcr.io/your_project_name",
-	"repos": [
-		{
-			"url": "https://foobar.com/coolkids/project.git",
-			"sha": "791d2cc999286ddc27873748ad6e21f86c244727",
-			"image": "gcr.io/your_project_name/coolkids-project:791d2cc"
-		}
-	]
+  "notifications": [
+    "slack"
+    ],
+    "slack": {
+      "channel": "#channelname",
+      "username": "stevedore-bot",
+      "webhook": "https://hooks.slack.com/services/<code>/<code>/<code>"
+    },
+    "publishCommand": [
+      "gcloud",
+    "preview",
+    "docker",
+    "push"
+      ],
+    "registryUrl": "gcr.io/your_project_name"
 }
