@@ -24,7 +24,7 @@ func imageName(r *repo.Repo, registry string, dockerfile string) string {
 
 	fname := filepath.Base(dockerfile)
 	if strings.HasPrefix(fname, "Dockerfile.") {
-		suffix := strings.Replace(fname, "Dockerfile.", "", 1)
+		suffix := fname[len("Dockerfile."):]
 		img = strings.Join([]string{img, suffix}, "-")
 	}
 
@@ -98,7 +98,6 @@ func prepareCommand(path, cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
 	c.Dir = path
 	c.Stdout = ui.Wrap(os.Stdout)
-
 	c.Stderr = c.Stdout
 	return c
 }
