@@ -57,8 +57,8 @@ func All() ([]*Repo, error) {
 	}
 
 	cfg = Config{}
-	json.Unmarshal(file, &cfg)
-	return cfg.Repos, nil
+	err = json.Unmarshal(file, &cfg)
+	return cfg.Repos, err
 }
 
 // Save updates the Stevedore configuration.
