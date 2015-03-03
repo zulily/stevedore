@@ -26,7 +26,7 @@ type Config struct {
 	Webhook  string
 }
 
-// WithWebHook returns a configuration function that sets the slack webhook address.
+// WithWebhook returns a configuration function that sets the slack webhook address.
 func WithWebhook(webhook string) func(*Config) error {
 	return func(c *Config) error {
 		c.Webhook = webhook
@@ -43,7 +43,7 @@ func WithChannelAndUsername(channel, username string) func(*Config) error {
 	}
 }
 
-// NewSlack creates a Slack instance. Configuration functions may be
+// New creates a Slack instance. Configuration functions may be
 // supplied to override the default settings of the Config.
 // The default settings are as follows:
 //    Webhook:       "",
