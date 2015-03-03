@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	width int
 	blank []byte
 )
 
