@@ -19,8 +19,9 @@
 FROM       golang:1.4.2
 MAINTAINER Core Engineering <core@zulily.com>
 
-# We manage all deps using 'godep'
+# Get build tools
 RUN        go get github.com/tools/godep
+RUN        go get golang.org/x/tools/cmd/cover
 
 # Set up a $GOPATH, restore all necessary deps into the $GOPATH
 ENV        GOPATH /go/

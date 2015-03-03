@@ -21,7 +21,8 @@ set -o pipefail
 PKG=$1
 
 # test
-godep go test -v $PKG
+echo "testing (with coverage): ${PKG}/..."
+godep go test -cover -v $PKG/...
 
 # Get the name of the resulting executable as established by "go build":
 #
