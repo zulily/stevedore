@@ -45,16 +45,15 @@ func loadConfig() error {
 		return err
 	}
 
-	return json.Unmarshal(file, &cfg)
-}
-
-// ImagePublishCommand returns the command line strings to use to publish an image.
-func (c *config) ImagePublishCommand(image string) []string {
-	if c.PublishCommand == nil {
-		return []string{"docker", "push", image}
+	err = json.Unmarshal(file, &cfg)
+	if err != nil {
+		return err
 	}
 
-	return append(c.PublishCommand, image)
+	if len(cfg.PublishCommand) == 0 {
+		cfg.PublishCommand = []string{"docker", "push"}
+	}
+	return nil
 }
 
 func main() {
@@ -129,10 +128,11 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 		return false
 	}
 
+	cmd := cfg.PublishCommand
 	for _, img := range imgs {
 		ui.Info("%s version %s has been built", r.URL, head)
 
-		if err := image.Publish(cfg.ImagePublishCommand(img)); err != nil {
+		if err := image.Publish(img, cmd); err != nil {
 			ui.Err(fmt.Sprintf("Error publishing %s: %v", r.URL, err))
 			return false
 		}

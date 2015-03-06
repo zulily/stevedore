@@ -24,7 +24,7 @@ func imageName(r *repo.Repo, registry string, dockerfile string) string {
 
 	fname := filepath.Base(dockerfile)
 	if strings.HasPrefix(fname, "Dockerfile.") {
-		suffix := strings.Replace(fname, "Dockerfile.", "", 1)
+		suffix := fname[len("Dockerfile."):]
 		img = strings.Join([]string{img, suffix}, "-")
 	}
 
@@ -83,10 +83,11 @@ func Build(r *repo.Repo, version, registry string) (name []string, err error) {
 	return names, nil
 }
 
-// Publish pushes a local docker image to its registry via `gcloud preview docker push`.
-func Publish(publishCmd []string) error {
+// Publish pushes a local docker image to its registry, using the specified publish command.  For
+// example: `gcloud preview docker push`, or `docker push`.
+func Publish(image string, publishCmd []string) error {
 	cmd := publishCmd[0]
-	args := publishCmd[1:]
+	args := append(publishCmd[1:], image)
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -98,7 +99,6 @@ func prepareCommand(path, cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
 	c.Dir = path
 	c.Stdout = ui.Wrap(os.Stdout)
-
 	c.Stderr = c.Stdout
 	return c
 }
