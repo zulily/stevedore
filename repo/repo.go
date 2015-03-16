@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -11,8 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-
-	"core-gitlab.corp.zulily.com/core/stevedore/ui"
 )
 
 var (
@@ -28,9 +27,10 @@ type Config struct {
 
 // Repo represents a git source code repository.
 type Repo struct {
-	URL    string   `json:"url"`
-	SHA    string   `json:"sha"`
-	Images []string `json:"images"`
+	URL           string            `json:"url"`
+	SHA           string            `json:"sha"`
+	Images        []string          `json:"images"`
+	ExternalFiles map[string]string `json:"external,omitempty"`
 }
 
 // LocalPath returns the location on the local file-system where this repo will
@@ -109,6 +109,37 @@ func (r *Repo) Checkout() (head string, err error) {
 	return getHead(local)
 }
 
+func (r *Repo) PrepareMake() error {
+	if len(r.ExternalFiles) == 0 {
+		return nil
+	}
+
+	for src, dest := range r.ExternalFiles {
+		dest = filepath.Join(r.LocalPath(), dest)
+		fmt.Println("Copying", src, "to", dest)
+		in, err := os.Open(src)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+		out, err := os.Create(dest)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+		_, err = io.Copy(out, in)
+		cerr := out.Close()
+		if err != nil {
+			return err
+		}
+		if cerr != nil {
+			return cerr
+		}
+	}
+
+	return nil
+}
+
 func clone(url, dest string) (head string, err error) {
 	cmd := prepareGitCommand(path.Dir(dest), "git", "clone", url, dest)
 	if err := cmd.Run(); err != nil {
@@ -134,7 +165,7 @@ func prepareGitCommand(dir, cmd string, args ...string) *exec.Cmd {
 	c := exec.Command(cmd, args...)
 	c.Env = []string{"GIT_SSL_NO_VERIFY=true"}
 	c.Dir = dir
-	c.Stdout = ui.Wrap(os.Stdout)
+	c.Stdout = os.Stdout
 	c.Stderr = c.Stdout
 	return c
 }

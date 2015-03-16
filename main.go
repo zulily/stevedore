@@ -116,6 +116,11 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 		return false
 	}
 
+	if err := r.PrepareMake(); err != nil {
+		ui.Err(fmt.Sprintf("Error preparing %s: %v", r.URL, err))
+		return false
+	}
+
 	ui.Info("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head)
 	if err := image.Make(r); err != nil {
 		ui.Err(fmt.Sprintf("Error making %s: %v", r.URL, err))
