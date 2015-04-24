@@ -48,10 +48,7 @@ func Make(r *repo.Repo) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("running make...")
-	output, err := execAndCapture(r.LocalPath(), "make")
-	fmt.Printf("done. got: %s\n, %v\n", output, err)
-	return output, err
+	return execAndCapture(r.LocalPath(), "make")
 }
 
 // Build creates one or more docker images, as specified by the Dockerfile(s)
@@ -120,19 +117,15 @@ func execAndCapture(path, cmd string, args ...string) (string, error) {
 	w := io.MultiWriter(os.Stdout, &buf)
 
 	go func() {
-		fmt.Println("about to pipe data....")
 		if _, err := io.Copy(w, r); err != nil {
-
 			fmt.Println(err.Error())
 		}
 	}()
 
-	fmt.Println("starting....")
 	if err := c.Start(); err != nil {
 		return buf.String(), err
 	}
 
-	fmt.Println("waiting....")
 	if err := c.Wait(); err != nil {
 		return buf.String(), err
 	}
