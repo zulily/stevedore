@@ -1,5 +1,4 @@
-.git
-Godeps/_workspace
+.git/
 build/
-builds/
-
+Godeps/
+Makefile

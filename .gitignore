@@ -1,6 +1,8 @@
-*.swp
+build/container
 build-server
 config.json
 repos.json
 builds
+*.swp
+*.tmp
 stevedore
