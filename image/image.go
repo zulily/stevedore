@@ -56,6 +56,8 @@ func Make(r *repo.Repo) (string, error) {
 // use the naming convention 'Dockerfile.<SUFFIX>' If the returned error is
 // non-nil, then `output` may contain the combined stdout/stderr output from
 // the docker image build that produced the error.
+//
+// TODO: add type buildResult struct {...} and return a []buildResult here
 func Build(r *repo.Repo, version, registry string) (name []string, output string, err error) {
 
 	var names []string
