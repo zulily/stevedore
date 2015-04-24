@@ -1,7 +1,9 @@
 package image
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -35,69 +37,105 @@ func versionToTag(version string) string {
 }
 
 // Make will run the `make` command in the repository root directory if there
-// is a Makefile there.
-func Make(r *repo.Repo) error {
+// is a Makefile there.  It returns the combined stdout/stderr from the
+// execution of the command, along with any error that may have occurred
+func Make(r *repo.Repo) (string, error) {
 	makefile := filepath.Join(r.LocalPath(), "Makefile")
 	if _, err := os.Stat(makefile); err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return "", nil
 		}
-		return err
+		return "", err
 	}
 
-	makeCmd := prepareCommand(r.LocalPath(), "make")
-	if err := makeCmd.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	fmt.Println("running make...")
+	output, err := execAndCapture(r.LocalPath(), "make")
+	fmt.Printf("done. got: %s\n, %v\n", output, err)
+	return output, err
 }
 
-// Build creates one or more docker images, as specified by the Dockerfile(s) in the repo root
-// path.  Valid Dockerfiles are either named 'Dockerfile' or use the naming convention 'Dockerfile.<SUFFIX>'
-func Build(r *repo.Repo, version, registry string) (name []string, err error) {
+// Build creates one or more docker images, as specified by the Dockerfile(s)
+// in the repo root path.  Valid Dockerfiles are either named 'Dockerfile' or
+// use the naming convention 'Dockerfile.<SUFFIX>' If the returned error is
+// non-nil, then `output` may contain the combined stdout/stderr output from
+// the docker image build that produced the error.
+func Build(r *repo.Repo, version, registry string) (name []string, output string, err error) {
 
 	var names []string
 	dockerfiles, err := filepath.Glob(filepath.Join(r.LocalPath(), "Dockerfile*"))
 	if err == filepath.ErrBadPattern {
-		return names, err
+		return names, "", err
 	}
 
 	if dockerfiles == nil {
-		return names, fmt.Errorf("Cannot build %s, no Dockerfile(s) found in root of repository", r.URL)
+		return names, "", fmt.Errorf("Cannot build %s, no Dockerfile(s) found in root of repository", r.URL)
 	}
 
 	for _, dockerfile := range dockerfiles {
 		nameAndTag := imageName(r, registry, dockerfile) + ":" + versionToTag(version)
 
-		buildCmd := prepareCommand(r.LocalPath(), "docker", "build", "--force-rm", "-f", dockerfile, "-t", nameAndTag, ".")
-
-		if err := buildCmd.Run(); err != nil {
-			return names, err
+		output, err := execAndCapture(r.LocalPath(), "docker", "build", "--force-rm", "-f", dockerfile, "-t", nameAndTag, ".")
+		if err != nil {
+			return names, output, err
 		}
 
 		names = append(names, nameAndTag)
 	}
 
-	return names, nil
+	return names, "", nil
 }
 
 // Publish pushes a local docker image to its registry, using the specified publish command.  For
 // example: `gcloud preview docker push`, or `docker push`.
-func Publish(image string, publishCmd []string) error {
+func Publish(image string, publishCmd []string) (string, error) {
 	cmd := publishCmd[0]
 	args := append(publishCmd[1:], image)
 	wd, err := os.Getwd()
 	if err != nil {
-		return err
+		return "", err
 	}
-	return prepareCommand(wd, cmd, args...).Run()
+
+	return execAndCapture(wd, cmd, args...)
 }
 
-func prepareCommand(path, cmd string, args ...string) *exec.Cmd {
+// execAndCapture execs the given command, returning the combined stdout/stderr
+// of the command, along with any error that may have occurred.  Additionally,
+// the same combined output is streamed to stdout while the command is
+// executing. This behavior is analogous to the POSIX `tee` command.
+func execAndCapture(path, cmd string, args ...string) (string, error) {
 	c := exec.Command(cmd, args...)
 	c.Dir = path
-	c.Stdout = os.Stdout
-	c.Stderr = c.Stdout
-	return c
+	stdout, err := c.StdoutPipe()
+	if err != nil {
+		return "", err
+	}
+	stderr, err := c.StderrPipe()
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	// capture stdout and stderr with the same reader
+	r := io.MultiReader(stdout, stderr)
+	w := io.MultiWriter(os.Stdout, &buf)
+
+	go func() {
+		fmt.Println("about to pipe data....")
+		if _, err := io.Copy(w, r); err != nil {
+
+			fmt.Println(err.Error())
+		}
+	}()
+
+	fmt.Println("starting....")
+	if err := c.Start(); err != nil {
+		return buf.String(), err
+	}
+
+	fmt.Println("waiting....")
+	if err := c.Wait(); err != nil {
+		return buf.String(), err
+	}
+
+	return buf.String(), nil
 }
