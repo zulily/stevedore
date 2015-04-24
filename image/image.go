@@ -70,7 +70,7 @@ func Build(r *repo.Repo, version, registry string) (name []string, err error) {
 	for _, dockerfile := range dockerfiles {
 		nameAndTag := imageName(r, registry, dockerfile) + ":" + versionToTag(version)
 
-		buildCmd := prepareCommand(r.LocalPath(), "docker", "build", "-f", dockerfile, "-t", nameAndTag, ".")
+		buildCmd := prepareCommand(r.LocalPath(), "docker", "build", "--force-rm", "-f", dockerfile, "-t", nameAndTag, ".")
 
 		if err := buildCmd.Run(); err != nil {
 			return names, err
