@@ -100,6 +100,19 @@ func check() (updated int) {
 	return updated
 }
 
+// notify reports a msg to the specified ui output func, and to any configured
+// notifications.  Additionally, if any errors ocurr during notificiation, that
+// error is sent to the UI's Err func.
+func notify(msg, output string, uiFunc func(string, ...string)) {
+	uiFunc(msg)
+	if notifications != nil {
+		msg = fmt.Sprintf("%s\n%s", msg, output)
+		if err := notifications.Notify(msg); err != nil {
+			ui.Err(err.Error())
+		}
+	}
+}
+
 func checkRepo(r *repo.Repo, registry string) (updated bool) {
 	if strings.Index(r.URL, "https://") != 0 {
 		ui.Warn(fmt.Sprintf("Skipping %s, only https is supported", r.URL))
@@ -115,21 +128,30 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 	if r.SHA == head {
 		return false
 	}
+	ui.Info("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head)
+
+	// Update and persist the new SHA now, so that if a build/publish fails, it
+	// won't repeate endlessly
+	r.SHA = head
+	if err := r.Save(); err != nil {
+		ui.Err(fmt.Sprintf("Error updating %s: %v", r.URL, err))
+	}
 
 	if err := r.PrepareMake(); err != nil {
 		ui.Err(fmt.Sprintf("Error preparing %s: %v", r.URL, err))
 		return false
 	}
 
-	ui.Info("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head)
-	if err := image.Make(r); err != nil {
-		ui.Err(fmt.Sprintf("Error making %s: %v", r.URL, err))
+	if output, err := image.Make(r); err != nil {
+		msg := fmt.Sprintf("Error making %s: %v", r.URL, err)
+		notify(msg, output, ui.Err)
 		return false
 	}
 
-	imgs, err := image.Build(r, head, registry)
+	imgs, output, err := image.Build(r, head, registry)
 	if err != nil {
-		ui.Err(fmt.Sprintf("Error building %s: %v", r.URL, err))
+		msg := fmt.Sprintf("Error building %s: %v", r.URL, err)
+		notify(msg, output, ui.Err)
 		return false
 	}
 
@@ -137,22 +159,16 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 	for _, img := range imgs {
 		ui.Info("%s version %s has been built", r.URL, head)
 
-		if err := image.Publish(img, cmd); err != nil {
-			ui.Err(fmt.Sprintf("Error publishing %s: %v", r.URL, err))
+		if output, err := image.Publish(img, cmd); err != nil {
+			msg := fmt.Sprintf("Error publishing %s: %v", r.URL, err)
+			notify(msg, output, ui.Err)
 			return false
 		}
 
 		msg := fmt.Sprintf("A new image for %s has been published to %s", r.URL, img)
-		ui.Info(msg)
-
-		if notifications != nil {
-			if err = notifications.Notify(msg); err != nil {
-				ui.Err(err.Error())
-			}
-		}
+		notify(msg, "", ui.Info)
 	}
 
-	r.SHA = head
 	r.Images = imgs
 	if err := r.Save(); err != nil {
 		ui.Err(fmt.Sprintf("Error updating %s: %v", r.URL, err))
