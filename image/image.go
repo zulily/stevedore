@@ -118,14 +118,12 @@ func execAndCapture(path, cmd string, args ...string) (string, error) {
 	r := io.MultiReader(stdout, stderr)
 	w := io.MultiWriter(os.Stdout, &buf)
 
-	go func() {
-		if _, err := io.Copy(w, r); err != nil {
-			fmt.Println(err.Error())
-		}
-	}()
-
 	if err := c.Start(); err != nil {
 		return buf.String(), err
+	}
+
+	if _, err := io.Copy(w, r); err != nil {
+		fmt.Println(err.Error())
 	}
 
 	if err := c.Wait(); err != nil {
