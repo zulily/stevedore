@@ -29,7 +29,7 @@ func imageName(r *repo.Repo, registry string, dockerfile string) string {
 		img = strings.Join([]string{img, suffix}, "-")
 	}
 
-	return img
+	return strings.ToLower(img)
 }
 
 func versionToTag(version string) string {
