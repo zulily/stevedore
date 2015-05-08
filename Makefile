@@ -39,8 +39,8 @@ SRC_ROOT=github.com/zulily/stevedore/
 # Builds the docker image that we'll use to compile all subsequent golang code
 # touch: http://www.gnu.org/software/make/manual/make.html#Empty-Targets
 build/container: build/Dockerfile
-	@echo "${LIGHT_GREEN}building Docker image: boilerplate/core-stevedore-compile...${NC}"
-	docker build --no-cache -t boilerplate/core-stevedore-compile build/
+	@echo "${LIGHT_GREEN}building Docker image: boilerplate/zulily-stevedore-compile...${NC}"
+	@docker build --no-cache -t boilerplate/zulily-stevedore-compile build/ > /dev/null
 	touch $@
 
 clean:
@@ -55,7 +55,7 @@ godep: build/container
 		-v "$$PWD":"/go/src/${SRC_ROOT}" \
 		-w "/go/src/${SRC_ROOT}" \
 		${DOCKER_USER} \
-	  -t boilerplate/core-stevedore-compile \
+	  -t boilerplate/zulily-stevedore-compile \
 		godep save
 .PHONY: godep
 
@@ -73,7 +73,7 @@ stevedore: $(STEVEDORE_SRCS) build/container
 	  -e "GOARCH=${GOARCH}" \
 		-e "BINARY=stevedore" \
 		-e "GIT_SHA=${GIT_SHA}" \
-		-t boilerplate/core-stevedore-compile
+		-t boilerplate/zulily-stevedore-compile
 
 build: stevedore
 
@@ -83,8 +83,8 @@ test: build
 	@docker run --rm \
 		-v "$$PWD":"/go/src/${SRC_ROOT}" \
 		-w "/go/src/${SRC_ROOT}" \
-		boilerplate/core-stevedore-compile \
-		godep go test -v
+		boilerplate/zulily-stevedore-compile \
+		godep go test -v ./...
 .PHONY: test
 
 install: build test
@@ -98,7 +98,7 @@ lint: build/container
 	@docker run --rm \
 		-v "$$PWD":"/go/${SRC_ROOT}" \
 		-w "/go/${SRC_ROOT}/" \
-		boilerplate/core-stevedore-compile \
+		boilerplate/zulily-stevedore-compile \
 		golint ./...
 .PHONY: lint
 
@@ -112,10 +112,10 @@ dockerize: build/container
 		${DOCKER_USER} \
 		-e "BINARY=stevedore" \
 		-e "GIT_SHA=${GIT_SHA}" \
-		-t boilerplate/core-stevedore-compile
+		-t boilerplate/zulily-stevedore-compile
 
-	@echo "${LIGHT_GREEN}building Docker image 'core/stevedore:${GIT_SHA}'...${NC}"
+	@echo "${LIGHT_GREEN}building Docker image 'zulily/stevedore:${GIT_SHA}'...${NC}"
 	@docker build --no-cache \
-		-t "core/stevedore:${GIT_SHA}" ${PWD}
+		-t "zulily/stevedore:${GIT_SHA}" ${PWD}
 .PHONY: dockerize
 

@@ -1,3 +1,3 @@
-FROM       debian:stable
-ADD        ./stevedore /stevedore
-ENTRYPOINT ["/stevedore"]
+FROM       scratch
+ADD        ./stevedore ./stevedore
+ENTRYPOINT ["./stevedore"]
