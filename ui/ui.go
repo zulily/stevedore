@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/mgutz/ansi"
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/zulily/stevedore/Godeps/_workspace/src/github.com/mgutz/ansi"
+	"github.com/zulily/stevedore/Godeps/_workspace/src/golang.org/x/crypto/ssh/terminal"
 )
 
 var (
