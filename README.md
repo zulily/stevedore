@@ -15,7 +15,7 @@ latest GCE-provided debian image for this setup.
 
 #### Add an entry to /etc/hosts for the gitlab server
 
-    $ echo "IP_ADDRESS core-gitlab.corp.zulily.com" >> /etc/hosts
+    $ echo "IP_ADDRESS github.com" >> /etc/hosts
 
 #### Tell git (which stevedore shells out to) to ignore SSL cert warnings
 

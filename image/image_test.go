@@ -4,13 +4,13 @@ import (
 	"strings"
 	"testing"
 
-	"core-gitlab.corp.zulily.com/core/stevedore/repo"
+	"github.com/zulily/stevedore/repo"
 )
 
 func TestImageName(t *testing.T) {
 	registry := "gcr.io/eternal_empire_754"
 	repo := &repo.Repo{
-		URL:    "https://core-gitlab.corp.zulily.com/dcarney/actually-test.git",
+		URL:    "https://github.com/dcarney/actually-test.git",
 		SHA:    "ecaf0d06834ec132fedd74a61a3e3871367c5833",
 		Images: []string{},
 	}
@@ -28,7 +28,7 @@ func TestImageName(t *testing.T) {
 func TestImageNameWithNonDefaultDockerfile(t *testing.T) {
 	registry := "gcr.io/eternal_empire_754"
 	repo := &repo.Repo{
-		URL:    "https://core-gitlab.corp.zulily.com/dcarney/actually-test.git",
+		URL:    "https://github.com/dcarney/actually-test.git",
 		SHA:    "ecaf0d06834ec132fedd74a61a3e3871367c5833",
 		Images: []string{},
 	}

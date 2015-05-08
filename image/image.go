@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"core-gitlab.corp.zulily.com/core/stevedore/repo"
+	"github.com/zulily/stevedore/repo"
 )
 
 func imageName(r *repo.Repo, registry string, dockerfile string) string {

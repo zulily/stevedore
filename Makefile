@@ -32,7 +32,7 @@ GOARCH := $(shell if [[ `uname -a` == *"x86_64"* ]]; then echo "amd64"; else ech
 
 # the "root" pkg contained in this project.  If the project contains multiple
 # binaries, each binary's main pkg will be in a subdir of SRC_ROOT
-SRC_ROOT=core-gitlab.corp.zulily.com/core/stevedore/
+SRC_ROOT=github.com/zulily/stevedore/
 
 .DEFAULT_GOAL := build
 

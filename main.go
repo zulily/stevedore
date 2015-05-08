@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"core-gitlab.corp.zulily.com/core/stevedore/image"
-	"core-gitlab.corp.zulily.com/core/stevedore/repo"
-	"core-gitlab.corp.zulily.com/core/stevedore/slack"
-	"core-gitlab.corp.zulily.com/core/stevedore/ui"
+	"github.com/zulily/stevedore/image"
+	"github.com/zulily/stevedore/repo"
+	"github.com/zulily/stevedore/slack"
+	"github.com/zulily/stevedore/ui"
 )
 
 var (

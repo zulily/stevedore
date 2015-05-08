@@ -1,5 +1,5 @@
 {
-	"ImportPath": "core-gitlab.corp.zulily.com/core/stevedore",
+	"ImportPath": "github.com/zulily/stevedore",
 	"GoVersion": "go1.4.1",
 	"Deps": [
 		{
