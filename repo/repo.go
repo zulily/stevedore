@@ -25,12 +25,23 @@ type Config struct {
 	Repos []*Repo `json:"repos"`
 }
 
+type BuildStatus int
+
+const (
+	Passing BuildStatus = iota
+	InProgress
+	Failing
+)
+
 // Repo represents a git source code repository.
 type Repo struct {
-	URL           string            `json:"url"`
-	SHA           string            `json:"sha"`
-	Images        []string          `json:"images"`
-	ExternalFiles map[string]string `json:"external,omitempty"`
+	URL             string            `json:"url"`
+	SHA             string            `json:"sha"`
+	Images          []string          `json:"images"`
+	LastPublishDate int64             `json:"lastPublishDate"`
+	Log             string            `json:"log"`
+	Status          BuildStatus       `json:"buildStatus"`
+	ExternalFiles   map[string]string `json:"external,omitempty"`
 }
 
 // LocalPath returns the location on the local file-system where this repo will
@@ -61,13 +72,14 @@ func All() ([]*Repo, error) {
 	return cfg.Repos, err
 }
 
-// Save updates the Stevedore configuration.
+// Save updates the Stevedore configuration
 func (r *Repo) Save() error {
 	mu.Lock()
 	defer mu.Unlock()
 
 	bytes, err := json.MarshalIndent(cfg, "", "\t")
 	if err != nil {
+		fmt.Printf("ERROR saving: %#v\n", err)
 		return err
 	}
 

@@ -51,37 +51,45 @@ func Make(r *repo.Repo) (string, error) {
 	return execAndCapture(r.LocalPath(), "make")
 }
 
+// BuildResult encapsulates the status of a build attempt for a repo
+type BuildResult struct {
+
+	// ImageName is the full name of the Docker image that was built
+	ImageName string
+
+	// Output is the combined stdout/stderr of the build process
+	Output string
+
+	// Err is any error that may have occurred during the image building
+	Err error
+}
+
 // Build creates one or more docker images, as specified by the Dockerfile(s)
 // in the repo root path.  Valid Dockerfiles are either named 'Dockerfile' or
-// use the naming convention 'Dockerfile.<SUFFIX>' If the returned error is
-// non-nil, then `output` may contain the combined stdout/stderr output from
-// the docker image build that produced the error.
-//
-// TODO: add type buildResult struct {...} and return a []buildResult here
-func Build(r *repo.Repo, version, registry string) (name []string, output string, err error) {
-
-	var names []string
+// use the naming convention 'Dockerfile.<SUFFIX>'.  The func results the
+// results from each build, along with any error that may have occurred.  Note
+// that this error is a general error, and is different from the `Err` property
+// of each returned build result.
+func Build(r *repo.Repo, version, registry string) ([]*BuildResult, error) {
+	var results []*BuildResult
 	dockerfiles, err := filepath.Glob(filepath.Join(r.LocalPath(), "Dockerfile*"))
 	if err == filepath.ErrBadPattern {
-		return names, "", err
+		return results, err
 	}
 
 	if dockerfiles == nil {
-		return names, "", fmt.Errorf("Cannot build %s, no Dockerfile(s) found in root of repository", r.URL)
+		return results, fmt.Errorf("Cannot build %s, no Dockerfile(s) found in root of repository", r.URL)
 	}
 
 	for _, dockerfile := range dockerfiles {
 		nameAndTag := imageName(r, registry, dockerfile) + ":" + versionToTag(version)
 
 		output, err := execAndCapture(r.LocalPath(), "docker", "build", "--force-rm", "-f", dockerfile, "-t", nameAndTag, ".")
-		if err != nil {
-			return names, output, err
-		}
-
-		names = append(names, nameAndTag)
+		result := &BuildResult{ImageName: nameAndTag, Output: output, Err: err}
+		results = append(results, result)
 	}
 
-	return names, "", nil
+	return results, nil
 }
 
 // Publish pushes a local docker image to its registry, using the specified publish command.  For

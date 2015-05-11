@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +21,7 @@ var (
 	sleepDuration = 1 * time.Minute
 	cfg           config
 	notifications *slack.Slack
+	repos         []*repo.Repo
 )
 
 type config struct {
@@ -28,6 +29,7 @@ type config struct {
 	PublishCommand []string `json:"publishCommand"`
 	RegistryURL    string   `json:"registryUrl"`
 	Notifications  []string `json:"notifications"`
+	Port           int      `json:"port"`
 	Slack          struct {
 		Channel  string `json:"channel"`
 		Username string `json:"username"`
@@ -76,44 +78,57 @@ func main() {
 		return
 	}
 
+	http.HandleFunc("/", uiHandler)
+	go func() {
+		ui.Info(fmt.Sprintf("starting web server on :%d", cfg.Port))
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), nil); err != nil {
+			ui.Err(err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	for {
-		updated := check()
-		ui.Task("%s repo images updated, built and published. Sleeping for %s...", strconv.Itoa(updated), sleepDuration.String())
+		check()
+		//	ui.Task("%s repo images updated, built and published. Sleeping for %s...", strconv.Itoa(updated), sleepDuration.String())
+		ui.Task("repo images updated, built and published. Sleeping for %s...", sleepDuration.String())
 		time.Sleep(sleepDuration)
+	}
+}
+
+func uiHandler(w http.ResponseWriter, r *http.Request) {
+	if err := RenderServicesHTML(repos, w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func check() (updated int) {
 	ui.Task("Checking repos.")
-	repos, err := repo.All()
+	var err error
+	repos, err = repo.All()
+
 	if err != nil {
 		ui.Err(err.Error())
 		return 0
 	}
 
-	for _, repo := range repos {
-		if checkRepo(repo, cfg.RegistryURL) {
+	for _, r := range repos {
+		r.Status = repo.InProgress
+		if checkRepo(r, cfg.RegistryURL) {
+			r.Status = repo.Passing
 			updated++
+		} else {
+			r.Status = repo.Failing
+		}
+
+		if err := r.Save(); err != nil {
+			ui.Err(fmt.Sprintf("Error updating %s: %v", r.URL, err))
 		}
 	}
 
 	return updated
 }
 
-// notify reports a msg to the specified ui output func, and to any configured
-// notifications.  Additionally, if any errors ocurr during notificiation, that
-// error is sent to the UI's Err func.
-func notify(msg, output string, uiFunc func(string, ...string)) {
-	uiFunc(msg)
-	if notifications != nil {
-		msg = fmt.Sprintf("%s\n%s", msg, output)
-		if err := notifications.Notify(msg); err != nil {
-			ui.Err(err.Error())
-		}
-	}
-}
-
-func checkRepo(r *repo.Repo, registry string) (updated bool) {
+func checkRepo(r *repo.Repo, registry string) bool {
 	if strings.Index(r.URL, "https://") != 0 {
 		ui.Warn(fmt.Sprintf("Skipping %s, only https is supported", r.URL))
 		return false
@@ -126,7 +141,7 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 	}
 
 	if r.SHA == head {
-		return false
+		return true
 	}
 	ui.Info("%s has been updated from %s to %s. Starting a new build.", r.URL, r.SHA, head)
 
@@ -145,36 +160,66 @@ func checkRepo(r *repo.Repo, registry string) (updated bool) {
 	if output, err := image.Make(r); err != nil {
 		msg := fmt.Sprintf("Error making %s: %v", r.URL, err)
 		notify(msg, output, ui.Err)
+		r.Log = output
 		return false
 	}
 
-	imgs, output, err := image.Build(r, head, registry)
+	results, err := image.Build(r, head, registry)
 	if err != nil {
-		msg := fmt.Sprintf("Error building %s: %v", r.URL, err)
-		notify(msg, output, ui.Err)
+		ui.Err(err.Error())
 		return false
 	}
 
+	// If an image build failure occurred, notify and capture the last N bytes of output
+	for _, result := range results {
+		if result.Err != nil {
+			msg := fmt.Sprintf("Error building %s: %v", r.URL, result.Err)
+			r.Log = result.Output[max(0, len(result.Output)-4000):len(result.Output)]
+			notify(msg, result.Output, ui.Err)
+			return false
+		}
+	}
+
+	var images []string
 	cmd := cfg.PublishCommand
-	for _, img := range imgs {
+	for _, result := range results {
 		ui.Info("%s version %s has been built", r.URL, head)
 
-		if output, err := image.Publish(img, cmd); err != nil {
+		if output, err := image.Publish(result.ImageName, cmd); err != nil {
 			msg := fmt.Sprintf("Error publishing %s: %v", r.URL, err)
 			notify(msg, output, ui.Err)
 			return false
 		}
 
-		msg := fmt.Sprintf("A new image for %s has been published to %s", r.URL, img)
+		msg := fmt.Sprintf("A new image for %s has been published to %s", r.URL, result.ImageName)
 		notify(msg, "", ui.Info)
+		images = append(images, result.ImageName)
 	}
 
-	r.Images = imgs
-	if err := r.Save(); err != nil {
-		ui.Err(fmt.Sprintf("Error updating %s: %v", r.URL, err))
-	}
-
+	// Save the images that were successfully published, along with a timestamp
+	r.Images = images
+	r.LastPublishDate = time.Now().Unix()
 	return true
+}
+
+// notify reports a msg to the specified ui output func, and to any configured
+// notifications.  Additionally, if any errors ocurr during notificiation, that
+// error is sent to the UI's Err func.
+func notify(msg, output string, uiFunc func(string, ...string)) {
+	uiFunc(msg)
+	if notifications != nil {
+		msg = fmt.Sprintf("%s\n%s", msg, output)
+		if err := notifications.Notify(msg); err != nil {
+			ui.Err(err.Error())
+		}
+	}
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 // contains returns a boolean indicating whether or not `e` is contained in `s`

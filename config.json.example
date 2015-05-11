@@ -2,6 +2,7 @@
   "notifications": [
     "slack"
     ],
+    "port": 8080,
     "slack": {
       "channel": "#channelname",
       "username": "stevedore-bot",
