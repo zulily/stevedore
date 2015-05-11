@@ -1,14 +1,14 @@
-# Stevedore
+# stevedore
 
 > A simple CI server for building and publishing Docker images to a private registry
 
-Stevedore automates the process of checking out new code, building it, and
+`stevedore` automates the process of checking out new code, building it, and
 creating a new Docker image.
 
 ## Overview
 
-Stevedore listens for changes in a set of configured git repos. When a new
-change is detected, Stevedore will:
+`stevedore` listens for changes in a set of configured git repos. When a new
+change is detected, `stevedore` will:
 
 * fetch the lastest commits on your repo's `master` branch
 * call `make` to build the default `make` target (if your repo contains a `Makefile`)
@@ -18,18 +18,18 @@ change is detected, Stevedore will:
 
 ## Details
 
-In order for a repo to be `Stevedore`-compatible, it needs to adhere to the
+In order for a repo to be `stevedore`-compatible, it needs to adhere to the
 following contraints:
 
 * Code is available in a git repository.
 * If this repo is not publicly-accessible/cloneable, the user account used to
-  run the Stevedore process will need to be configured with access to the repo
+  run the `stevedore` process will need to be configured with access to the repo
 (via `ssh` configs, or other configured auth).
 * One or more `Dockerfile`s are present in the **root** of your repository.
 
 ## Image naming
 
-Stevedore automatically names your Docker images based on the name of the
+`stevedore` automatically names your Docker images based on the name of the
 configured Docker registry, the name of the git repo, and the latest git commit
 SHA.
 
@@ -38,12 +38,12 @@ are used.  Additionally, all forward-slash `/` characters after the git repo
 hostname are replaced with the dash `-` character. This name is prepended with
 the base URL of the container registry.
 
-Stevedore will build an image for any Dockerfile named `Dockerfile` or with a
+`stevedore` will build an image for any Dockerfile named `Dockerfile` or with a
 name that matches the glob `Dockerfile.*`. Any images built from a `Dockerfile` with an
 extension will have that extension appended to the image name after an
 additional dash `-` delimiter is added.
 
-Stevedore does **not** tag any images as “latest”. We believe that code builds
+`stevedore` does **not** tag any images as “latest”. We believe that code builds
 and Docker images should be immutable artifacts that do not change over time,
 and using "latest" as a build tag goes against this philosophy.  Instead, all
 images are tagged instead with the first-seven characters from the HEAD git
@@ -51,7 +51,7 @@ commit SHA.
 
 Some examples (using the [Google Container Registry
 (gcr.io)](https://cloud.google.com/tools/container-registry/) as the Docker
-registry:
+registry):
 
 | git repo url | Dockerfile | HEAD commit SHA | image name and tag |
 | ----------------------------------- | ----------- | --------------- | ---------- |
@@ -61,8 +61,17 @@ registry:
 
 ## Notifications
 
-Stevedore currently supports sending success/failure notifications via [Slack](https://slack.com/).  Other messaging platforms (HipChat, IRC, Campfire, etc.) can easily be added (pull requests welcome!).
+`stevedore` currently supports sending success/failure notifications via
+[Slack](https://slack.com/).  Other messaging platforms (HipChat, IRC,
+Campfire, etc.) can easily be added (pull requests welcome!).
 
 An example success notification looks like:
 
 ![Sample Slack notification](https://github.com/zulily/stevedore/blob/master/slack.png)
+
+An example failure notification will include the error message from the
+compilation and/or Docker image build failure:
+
+![Sample Slack notification](https://github.com/zulily/stevedore/blob/master/slack.png)
+
+
