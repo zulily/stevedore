@@ -72,6 +72,6 @@ An example success notification looks like:
 An example failure notification will include the error message from the
 compilation and/or Docker image build failure:
 
-![Sample Slack notification](https://github.com/zulily/stevedore/blob/master/slack.png)
+![Sample Slack notification](https://github.com/zulily/stevedore/blob/master/slack-failure.png)
 
 
