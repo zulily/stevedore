@@ -112,12 +112,12 @@ func check() (updated int) {
 	}
 
 	for _, r := range repos {
-		r.Status = repo.InProgress
+		r.Status = repo.StatusInProgress
 		if checkRepo(r, cfg.RegistryURL) {
-			r.Status = repo.Passing
+			r.Status = repo.StatusPassing
 			updated++
 		} else {
-			r.Status = repo.Failing
+			r.Status = repo.StatusFailing
 		}
 
 		if err := r.Save(); err != nil {

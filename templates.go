@@ -101,15 +101,15 @@ func formatUnixTime(unixTime int64) string {
 }
 
 func isFailing(r *repo.Repo) bool {
-	return r.Status == repo.Failing
+	return r.Status == repo.StatusFailing
 }
 
 func isInProgress(r *repo.Repo) bool {
-	return r.Status == repo.InProgress
+	return r.Status == repo.StatusInProgress
 }
 
 func isPassing(r *repo.Repo) bool {
-	return r.Status == repo.Passing
+	return r.Status == repo.StatusPassing
 }
 
 func (slice Repos) Len() int {
@@ -119,11 +119,11 @@ func (slice Repos) Len() int {
 // Less sorts "in progress" repos to the top, followed by the rest of the Repos
 // by publish date (descending), then by name (lexicographically)
 func (slice Repos) Less(i, j int) bool {
-	if slice[i].Status == repo.InProgress && slice[j].Status != repo.InProgress {
+	if slice[i].Status == repo.StatusInProgress && slice[j].Status != repo.StatusInProgress {
 		return true
 	}
 
-	if slice[j].Status == repo.InProgress && slice[i].Status != repo.InProgress {
+	if slice[j].Status == repo.StatusInProgress && slice[i].Status != repo.StatusInProgress {
 		return false
 	}
 

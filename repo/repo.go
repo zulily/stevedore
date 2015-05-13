@@ -28,9 +28,9 @@ type Config struct {
 type BuildStatus int
 
 const (
-	Passing BuildStatus = iota
-	InProgress
-	Failing
+	StatusPassing BuildStatus = iota
+	StatusInProgress
+	StatusFailing
 )
 
 // Repo represents a git source code repository.
