@@ -148,9 +148,6 @@ func checkRepo(r *repo.Repo, registry string) bool {
 	// Update and persist the new SHA now, so that if a build/publish fails, it
 	// won't repeate endlessly
 	r.SHA = head
-	if err := r.Save(); err != nil {
-		ui.Err(fmt.Sprintf("Error updating %s: %v", r.URL, err))
-	}
 
 	if err := r.PrepareMake(); err != nil {
 		ui.Err(fmt.Sprintf("Error preparing %s: %v", r.URL, err))
