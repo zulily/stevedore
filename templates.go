@@ -122,8 +122,13 @@ func (slice Repos) Less(i, j int) bool {
 	if slice[i].Status == repo.InProgress && slice[j].Status != repo.InProgress {
 		return true
 	}
-	if slice[i].LastPublishDate > slice[j].LastPublishDate {
-		return true
+
+	if slice[j].Status == repo.InProgress && slice[i].Status != repo.InProgress {
+		return false
+	}
+
+	if slice[i].LastPublishDate != slice[j].LastPublishDate {
+		return slice[i].LastPublishDate > slice[j].LastPublishDate
 	}
 
 	return slice[i].URL < slice[j].URL
