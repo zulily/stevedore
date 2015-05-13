@@ -27,6 +27,7 @@ const (
 
       <div class="jumbotron">
         <h1>stevedore</h1>
+				<p>ᕕ( ⁰ ▽ ⁰ )ᕗ  buildin' your containers</p>
       </div>
 
         {{ range . }}
