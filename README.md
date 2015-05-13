@@ -27,6 +27,17 @@ following contraints:
 (via `ssh` configs, or other configured auth).
 * One or more `Dockerfile`s are present in the **root** of your repository.
 
+## UI
+
+`stevedore` serves a simple read-only UI that shows the status of each
+configured repo.  The port used to serve this UI and TLS configuration is
+configured in the `config.json` file.
+
+Repos with builds in progress are listed first, and then sorted in descending
+order of their image publish date.
+
+![UI screencap](https://github.com/zulily/stevedore/blob/master/ui.png)
+
 ## Image naming
 
 `stevedore` automatically names your Docker images based on the name of the
