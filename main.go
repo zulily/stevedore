@@ -29,8 +29,13 @@ type config struct {
 	PublishCommand []string `json:"publishCommand"`
 	RegistryURL    string   `json:"registryUrl"`
 	Notifications  []string `json:"notifications"`
-	Port           int      `json:"port"`
-	Slack          struct {
+	Server         struct {
+		Port     int    `json:"port"`
+		TLS      bool   `json:"tls"`
+		KeyFile  string `json:"keyFile"`
+		CertFile string `json:"certFile"`
+	}
+	Slack struct {
 		Channel  string `json:"channel"`
 		Username string `json:"username"`
 		Webhook  string `json:"webhook"`
@@ -80,11 +85,18 @@ func main() {
 
 	http.HandleFunc("/", uiHandler)
 	go func() {
-		ui.Info(fmt.Sprintf("starting web server on :%d", cfg.Port))
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), nil); err != nil {
-			ui.Err(err.Error())
-			os.Exit(1)
+		address := fmt.Sprintf(":%d", cfg.Server.Port)
+		ui.Info(fmt.Sprintf("starting web server on :%s", address))
+
+		var err error
+		if cfg.Server.TLS {
+			ui.Info("using TLS")
+			err = http.ListenAndServeTLS(address, cfg.Server.CertFile, cfg.Server.KeyFile, nil)
+		} else {
+			err = http.ListenAndServe(address, nil)
 		}
+		ui.Err(err.Error())
+		os.Exit(1)
 	}()
 
 	for {
