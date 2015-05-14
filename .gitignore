@@ -5,4 +5,5 @@ repos.json
 builds
 *.swp
 *.tmp
+*.pem
 stevedore
