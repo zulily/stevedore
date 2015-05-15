@@ -16,6 +16,25 @@ change is detected, `stevedore` will:
 * push the Docker image(s) to your configured Docker registry
 * send success/failure notifications for each new image
 
+## Quick start
+
+Get the code:
+
+    $ git clone https://github.com/zulily/stevedore.git
+    $ cd stevedore
+
+Edit the example config files to provide your desired config and repos:
+
+    $ cp config.json.example config.json
+    $ cp repos.json.example repos.json
+    $ vim config.json
+    $ vim repos.json
+
+Build and run stevedore!
+
+    $ go install -v .
+    $ cp ${GOPATH}/bin/stevedore . && ./stevedore
+
 ## Details
 
 In order for a repo to be `stevedore`-compatible, it needs to adhere to the
