@@ -208,6 +208,7 @@ func checkRepo(r *repo.Repo, registry string) bool {
 	// Save the images that were successfully published, along with a timestamp
 	r.Images = images
 	r.LastPublishDate = time.Now().Unix()
+	r.Log = ""
 	return true
 }
 
