@@ -44,6 +44,14 @@ type Repo struct {
 	ExternalFiles   map[string]string `json:"external,omitempty"`
 }
 
+// Validate ensures that the Repo instance has a valid configuration
+func (r *Repo) Validate() error {
+	if strings.Index(r.URL, "https://") != 0 {
+		return fmt.Errorf("Invalid repo URL: '%s', only https is supported", r.URL)
+	}
+	return nil
+}
+
 // LocalPath returns the location on the local file-system where this repo will
 // be synced.
 func (r *Repo) LocalPath() string {
@@ -72,11 +80,33 @@ func All() ([]*Repo, error) {
 	return cfg.Repos, err
 }
 
+// Add adds a new repo to the global repo configuration
+func Add(r *Repo) ([]*Repo, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if r == nil {
+		return cfg.Repos, nil
+	}
+
+	cfg.Repos = append(cfg.Repos, r)
+
+	if err := doSave(); err != nil {
+		return nil, err
+	}
+
+	return cfg.Repos, nil
+}
+
 // Save updates the Stevedore configuration
 func (r *Repo) Save() error {
 	mu.Lock()
 	defer mu.Unlock()
 
+	return doSave()
+}
+
+func doSave() error {
 	bytes, err := json.MarshalIndent(cfg, "", "\t")
 	if err != nil {
 		fmt.Printf("ERROR saving: %#v\n", err)

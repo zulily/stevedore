@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -84,6 +83,9 @@ func main() {
 	}
 
 	http.HandleFunc("/", uiHandler)
+
+	http.HandleFunc("/repos", handleRepoAdd)
+
 	go func() {
 		address := fmt.Sprintf(":%d", cfg.Server.Port)
 		ui.Info(fmt.Sprintf("starting web server on :%s", address))
@@ -111,6 +113,57 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
 	if err := RenderServicesHTML(repos, w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func handleRepoAdd(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	var err error
+	var rb struct {
+		Repo string `json:"repo"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	if err = decoder.Decode(&rb); err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	alreadyExists := false
+	for _, r := range repos {
+		if r.URL == rb.Repo {
+			alreadyExists = true
+			break
+		}
+	}
+
+	if alreadyExists {
+		http.Error(w, http.StatusText(http.StatusNotModified), http.StatusNotModified)
+		return
+	}
+
+	newRepo := &repo.Repo{
+		URL: rb.Repo,
+	}
+
+	if err = newRepo.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	repos, err = repo.Add(newRepo)
+	if err != nil {
+		ui.Err(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(""))
 }
 
 func check() (updated int) {
@@ -141,8 +194,9 @@ func check() (updated int) {
 }
 
 func checkRepo(r *repo.Repo, registry string) bool {
-	if strings.Index(r.URL, "https://") != 0 {
-		ui.Warn(fmt.Sprintf("Skipping %s, only https is supported", r.URL))
+
+	if err := r.Validate(); err != nil {
+		ui.Warn(fmt.Sprintf("Skipping %s: %s", r.URL, err.Error()))
 		return false
 	}
 
