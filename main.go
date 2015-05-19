@@ -86,6 +86,7 @@ func main() {
 	http.HandleFunc("/", uiHandler)
 	http.HandleFunc("/repos", handleRepoAdd)
 	serveFile("/favicon.ico", "assets/favicon.ico")
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets/"))))
 
 	go func() {
 		address := fmt.Sprintf(":%d", cfg.Server.Port)

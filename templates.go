@@ -28,7 +28,7 @@ const (
 		<div class="container-fluid">
 			<div class="navbar-header">
 				<a class="navbar-brand" href="#">
-					<p>ᕕ( ⁰ ▽ ⁰ )ᕗ </p>
+					<img alt="Brand" src="/assets/s-small.png" />
 				</a>
 
 				<form id="add-repo" class="navbar-form navbar-left">
