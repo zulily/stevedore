@@ -21,6 +21,7 @@ var (
 	cfg           config
 	notifications *slack.Slack
 	repos         []*repo.Repo
+	emptyJSON     = []byte("{}")
 )
 
 type config struct {
@@ -163,7 +164,7 @@ func handleRepoAdd(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(""))
+	w.Write(emptyJSON)
 }
 
 func check() (updated int) {

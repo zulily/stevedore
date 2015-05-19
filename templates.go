@@ -23,8 +23,26 @@ const (
 		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/styles/default.min.css">
   </head>
   <body>
-    <div class="container">
 
+	<nav class="navbar navbar-default">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#">
+					<p>ᕕ( ⁰ ▽ ⁰ )ᕗ </p>
+				</a>
+
+				<form id="add-repo" class="navbar-form navbar-left">
+					<div class="form-group">
+						<input name="repo" type="text" class="form-control" style="width: 500px; important!" placeholder="https://github.com/username/project.git">
+					</div>
+					<button id="submit" type="submit" class="btn btn-default">Add new repo</button>
+				</form>
+			</div>
+		</div>
+	</nav>
+
+    <div class="container">
+			<div id="result"></div>
       <div class="jumbotron">
         <h1>stevedore</h1>
 				<p>ᕕ( ⁰ ▽ ⁰ )ᕗ  buildin' your containers</p>
@@ -85,6 +103,39 @@ const (
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
 		<script>hljs.initHighlightingOnLoad();</script>
+		<script type="text/javascript">
+			$(document).ready(function () {
+				$("#add-repo").submit(function(e){
+					e.preventDefault();
+					var repoRequest = {};
+					repoRequest["repo"] = $( "#add-repo :input[name=repo]" ).val();
+
+					$.ajax({
+						type: "POST",
+						url: "/repos",
+						data: JSON.stringify(repoRequest),
+						success: function(msg){
+							$("#result").html('<div class="alert alert-success"><button type="button" class="close">×</button>Added a new repo!</div>');
+							window.setTimeout(function() {
+								$(".alert").fadeTo(500, 0).slideUp(500, function(){
+									$(this).remove();
+								});
+							}, 1000);
+						},
+
+						error: function(xhr, status, err){
+							$("#result").html('<div class="alert alert-danger"><button type="button" class="close">×</button>' + err + '</div>');
+							window.setTimeout(function() {
+								$(".alert").fadeTo(500, 0).slideUp(500, function(){
+									$(this).remove();
+								});
+							}, 1000);
+						}
+
+					}); // ajax
+				}); 	// form submit
+			});
+		</script>
 	</body>
 </html>
 `
