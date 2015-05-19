@@ -84,8 +84,8 @@ func main() {
 	}
 
 	http.HandleFunc("/", uiHandler)
-
 	http.HandleFunc("/repos", handleRepoAdd)
+	serveFile("/favicon.ico", "assets/favicon.ico")
 
 	go func() {
 		address := fmt.Sprintf(":%d", cfg.Server.Port)
@@ -108,6 +108,15 @@ func main() {
 		ui.Task("repo images updated, built and published. Sleeping for %s...", sleepDuration.String())
 		time.Sleep(sleepDuration)
 	}
+}
+
+// serveFile creates an http.HandleFunc that can serve a single static file
+// from a specified path. This is useful for servicing requests for assets like
+// "/favicon.ico" without having to serve a whole root directory.
+func serveFile(pattern string, filename string) {
+	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filename)
+	})
 }
 
 func uiHandler(w http.ResponseWriter, r *http.Request) {
