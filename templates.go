@@ -141,19 +141,19 @@ const (
 						success: function(msg){
 							$("#result").html('<div class="alert alert-success"><button type="button" class="close">×</button>Added a new repo: [' + repoRequest["repo"] + ']!</div>');
 							window.setTimeout(function() {
-								$(".alert").fadeTo(500, 0).slideUp(500, function(){
+								$(".alert").fadeTo(1000, 0).slideUp(1000, function(){
 									$(this).remove();
 									location.reload();
 								});
-							}, 500);
+							}, 1000);
 						},
 						error: function(xhr, status, err){
 							$("#result").html('<div class="alert alert-danger"><button type="button" class="close">×</button>' + xhr.responseText + '</div>');
 							window.setTimeout(function() {
-								$(".alert").fadeTo(500, 0).slideUp(500, function(){
+								$(".alert").fadeTo(1000, 0).slideUp(1000, function(){
 									$(this).remove();
 								});
-							}, 500);
+							}, 1000);
 						}
 
 					}); // ajax
@@ -175,19 +175,19 @@ const (
 					success: function(msg){
 						$("#result").html('<div class="alert alert-success"><button type="button" class="close">×</button>' + "Repo: " + url + " is removed!" + '</div>');
 						window.setTimeout(function() {
-							$(".alert").fadeTo(500, 0).slideUp(500, function(){
+							$(".alert").fadeTo(1000, 0).slideUp(1000, function(){
 								$(this).remove();
 								location.reload();
 							});
-						}, 500);
+						}, 1000);
 					},
 					error: function(xhr, status, err){
 						$("#result").html('<div class="alert alert-danger"><button type="button" class="close">×</button>' + err + '</div>');
 						window.setTimeout(function() {
-							$(".alert").fadeTo(500, 0).slideUp(500, function(){
+							$(".alert").fadeTo(1000, 0).slideUp(1000, function(){
 								$(this).remove();
 							});
-						}, 500);
+						}, 1000);
 					}
 				}); // ajax
 			}
