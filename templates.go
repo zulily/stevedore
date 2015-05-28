@@ -42,15 +42,39 @@ const (
 	</nav>
 
     <div class="container">
-			<div id="result"></div>
-      <div class="jumbotron">
-        <h1>stevedore</h1>
-				<p>ᕕ( ⁰ ▽ ⁰ )ᕗ  buildin' your containers</p>
-      </div>
+		<div id="result"></div>
+
+		<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="modal-label" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+						<h4 class="modal-title" id="modal-label">Confirm Delete</h4>
+					</div>
+
+					<div class="modal-body">
+						<p>Are you sure you want to delete: <strong class="repo-url"></strong>?</p>
+					</div>
+
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+						<button class="btn btn-danger btn-ok" onClick="removeRepo(this.id)" data-dismiss="modal">Delete</button>
+					</div>
+				</div>
+			</div>
+    	</div>
+
+    	<div class="jumbotron">
+        	<h1>stevedore</h1>
+				<p>ᕕ( ⁰ ▽ ⁰ )ᕗ  buildin' your containers</p></div>
 
         {{ range . }}
 				<div class="panel panel-primary">
-					<div class="panel-heading"><h3>{{ .URL }}</h3></div>
+					<div class="panel-heading">
+					<span class="glyphicon glyphicon-remove" data-toggle="modal" data-target="#confirm-delete" data-repo-url="{{ .URL }}" style="float:right;"></span>
+						<h3>{{ .URL }}</h3>
+					</div>
 					<div class="panel-body">
 						<ul class="list-group">
 
@@ -79,7 +103,7 @@ const (
 
 						</ul>
 
-            {{ if .Images }}
+            		{{ if .Images }}
 						<h4>Images:</h4>
 						<ul class="list-group">
 						  {{ range $img := .Images }}
@@ -91,7 +115,7 @@ const (
 				  	{{ if .Log }}
  						<h4>Last build message:</h4>
 						<pre><code class="bash">
-{{ .Log }}
+					{{ .Log }}
 						</code></pre>
 						{{ end }}
 					</div>
@@ -115,26 +139,58 @@ const (
 						url: "/repos",
 						data: JSON.stringify(repoRequest),
 						success: function(msg){
-							$("#result").html('<div class="alert alert-success"><button type="button" class="close">×</button>Added a new repo!</div>');
+							$("#result").html('<div class="alert alert-success"><button type="button" class="close">×</button>Added a new repo: [' + repoRequest["repo"] + ']!</div>');
 							window.setTimeout(function() {
 								$(".alert").fadeTo(500, 0).slideUp(500, function(){
 									$(this).remove();
+									location.reload();
 								});
-							}, 1000);
+							}, 500);
 						},
-
 						error: function(xhr, status, err){
-							$("#result").html('<div class="alert alert-danger"><button type="button" class="close">×</button>' + err + '</div>');
+							$("#result").html('<div class="alert alert-danger"><button type="button" class="close">×</button>' + xhr.responseText + '</div>');
 							window.setTimeout(function() {
 								$(".alert").fadeTo(500, 0).slideUp(500, function(){
 									$(this).remove();
 								});
-							}, 1000);
+							}, 500);
 						}
 
 					}); // ajax
 				}); 	// form submit
 			});
+
+			$('#confirm-delete').on('show.bs.modal', function(e) {
+				$(this).find('.btn-ok').attr('id', $(e.relatedTarget).data('repo-url'));
+				$('.repo-url').html($(e.relatedTarget).data('repo-url'));
+      });
+
+			function removeRepo(url){
+				var repoRequest = {};
+				repoRequest["repo"] = url;
+				$.ajax({
+					type: "DELETE",
+					url: "/repos",
+					data: JSON.stringify(repoRequest),
+					success: function(msg){
+						$("#result").html('<div class="alert alert-success"><button type="button" class="close">×</button>' + "Repo: " + url + " is removed!" + '</div>');
+						window.setTimeout(function() {
+							$(".alert").fadeTo(500, 0).slideUp(500, function(){
+								$(this).remove();
+								location.reload();
+							});
+						}, 500);
+					},
+					error: function(xhr, status, err){
+						$("#result").html('<div class="alert alert-danger"><button type="button" class="close">×</button>' + err + '</div>');
+						window.setTimeout(function() {
+							$(".alert").fadeTo(500, 0).slideUp(500, function(){
+								$(this).remove();
+							});
+						}, 500);
+					}
+				}); // ajax
+			}
 		</script>
 	</body>
 </html>
