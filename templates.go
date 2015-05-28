@@ -44,18 +44,17 @@ const (
     <div class="container">
 		<div id="result"></div>
 
-		<!-- Modal HTML -->
-		<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="modal-label" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
 
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-						<h4 class="modal-title" id="myModalLabel">Confirm Delete</h4>
+						<h4 class="modal-title" id="modal-label">Confirm Delete</h4>
 					</div>
 
 					<div class="modal-body">
-						<p class="repo-url"></p>
+						<p>Are you sure you want to delete: <strong class="repo-url"></strong>?</p>
 					</div>
 
 					<div class="modal-footer">
@@ -73,8 +72,8 @@ const (
         {{ range . }}
 				<div class="panel panel-primary">
 					<div class="panel-heading">
+					<span class="glyphicon glyphicon-remove" data-toggle="modal" data-target="#confirm-delete" data-repo-url="{{ .URL }}" style="float:right;"></span>
 						<h3>{{ .URL }}</h3>
-						  <button class="btn btn-default" data-href="{{ .URL }}" data-toggle="modal" data-target="#confirm-delete">Remove</button>
 					</div>
 					<div class="panel-body">
 						<ul class="list-group">
@@ -162,9 +161,9 @@ const (
 			});
 
 			$('#confirm-delete').on('show.bs.modal', function(e) {
-				$(this).find('.btn-ok').attr('id', $(e.relatedTarget).data('href'));
-				$('.repo-url').html('Remove Repo: <strong>' + $(e.relatedTarget).data('href') + '</strong>');
-       		});
+				$(this).find('.btn-ok').attr('id', $(e.relatedTarget).data('repo-url'));
+				$('.repo-url').html($(e.relatedTarget).data('repo-url'));
+      });
 
 			function removeRepo(url){
 				var repoRequest = {};
