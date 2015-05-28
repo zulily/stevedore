@@ -12,12 +12,16 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"errors"
 )
 
 var (
 	// mu guards access to repos (and other data structures eventually)
 	mu  sync.Mutex
 	cfg Config
+
+	// ErrRepoNotFound is used when provided git repository is not found in global repository configuration
+	ErrRepoNotFound = errors.New("Repostory not found!")
 )
 
 // Config wraps the entire contents of the "repos.json" file.
@@ -96,6 +100,25 @@ func Add(r *Repo) ([]*Repo, error) {
 	}
 
 	return cfg.Repos, nil
+}
+
+// Remove removes repo by URL from the global repo configuration
+func Remove(url string) ([]*Repo, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if len(url) == 0 {
+		return nil, ErrRepoNotFound
+	}
+
+	for i, repo := range cfg.Repos {
+		if repo.URL == url {
+			cfg.Repos = append(cfg.Repos[0:i], cfg.Repos[i + 1:]...)
+			return cfg.Repos, doSave()
+		}
+	}
+
+	return nil, ErrRepoNotFound
 }
 
 // Save updates the Stevedore configuration

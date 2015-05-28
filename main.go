@@ -84,7 +84,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", uiHandler)
-	http.HandleFunc("/repos", handleRepoAdd)
+	http.HandleFunc("/repos", handleRepoRequest)
 	serveFile("/favicon.ico", "assets/favicon.ico")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets/"))))
 
@@ -126,12 +126,18 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleRepoAdd(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+func handleRepoRequest(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		handleRepoAdd(w, r)
+	case "DELETE":
+		handleRepoRemove(w, r)
+	default:
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
 	}
+}
 
+func handleRepoAdd(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var rb struct {
 		Repo string `json:"repo"`
@@ -152,7 +158,7 @@ func handleRepoAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if alreadyExists {
-		http.Error(w, http.StatusText(http.StatusNotModified), http.StatusNotModified)
+		http.Error(w, fmt.Sprintf("Repo: [%s] is already defined!", rb.Repo), http.StatusBadRequest)
 		return
 	}
 
@@ -170,6 +176,29 @@ func handleRepoAdd(w http.ResponseWriter, r *http.Request) {
 		ui.Err(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(emptyJSON)
+}
+
+func handleRepoRemove(w http.ResponseWriter, r *http.Request) {
+	var rb struct {
+		Repo string `json:"repo"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&rb); err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	if rs, err := repo.Remove(rb.Repo); err != nil {
+		http.Error(w, err.Error(), http.StatusNotModified)
+		return
+	} else {
+		repos = rs
 	}
 
 	w.Header().Set("Content-Type", "application/json")
