@@ -234,6 +234,7 @@ func check() (updated int) {
 }
 
 func checkRepo(r *repo.Repo, registry string) bool {
+	ui.Info("checking %s...", r.URL)
 
 	if err := r.Validate(); err != nil {
 		ui.Warn(fmt.Sprintf("Skipping %s: %s", r.URL, err.Error()))
