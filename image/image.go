@@ -15,7 +15,12 @@ import (
 func imageName(r *repo.Repo, registry string, dockerfile string) string {
 	urlTokens := strings.Split(strings.TrimSuffix(r.URL, ".git"), "/")
 	imgTokens := []string{registry}
-	imgTokens = append(imgTokens, urlTokens[3:]...)
+	// 3 tokens assumes "https:" "" "hostname" ... then the rest
+	discard := 3
+	if !strings.HasPrefix(r.URL, "http") {
+		discard = 1
+	}
+	imgTokens = append(imgTokens, urlTokens[discard:]...)
 	img := strings.Join(imgTokens, "/")
 	if strings.Count(img, "/") > 2 {
 		imgTokens = strings.SplitN(img, "/", 3)
