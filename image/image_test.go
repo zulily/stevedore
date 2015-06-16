@@ -10,7 +10,7 @@ import (
 func TestNonHttpsImageName(t *testing.T) {
 	registry := "gcr.io/eternal_empire_754"
 	repo := &repo.Repo{
-		URL:    "git@github.com/dcarney/actually-test.git",
+		URL:    "git@github.com:dcarney/actually-test.git",
 		SHA:    "ecaf0d06834ec132fedd74a61a3e3871367c5833",
 		Images: []string{},
 	}
