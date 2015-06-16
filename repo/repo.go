@@ -3,6 +3,7 @@ package repo
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,7 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"errors"
 )
 
 var (
@@ -50,16 +50,13 @@ type Repo struct {
 
 // Validate ensures that the Repo instance has a valid configuration
 func (r *Repo) Validate() error {
-	if strings.Index(r.URL, "https://") != 0 {
-		return fmt.Errorf("Invalid repo URL: '%s', only https is supported", r.URL)
-	}
 	return nil
 }
 
 // LocalPath returns the location on the local file-system where this repo will
 // be synced.
 func (r *Repo) LocalPath() string {
-	id := strings.NewReplacer("https://", "", "http://", "", "/", "_", ":", "_").Replace(r.URL)
+	id := strings.NewReplacer("https://", "", "http://", "", "/", "_", ":", "_", "@", "_").Replace(r.URL)
 	wd, err := os.Getwd()
 	if err != nil {
 		wd = os.TempDir()
@@ -113,7 +110,7 @@ func Remove(url string) ([]*Repo, error) {
 
 	for i, repo := range cfg.Repos {
 		if repo.URL == url {
-			cfg.Repos = append(cfg.Repos[0:i], cfg.Repos[i + 1:]...)
+			cfg.Repos = append(cfg.Repos[0:i], cfg.Repos[i+1:]...)
 			return cfg.Repos, doSave()
 		}
 	}
