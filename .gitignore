@@ -1,9 +1,0 @@
-build/container
-build-server
-config.json
-repos.json
-builds
-*.swp
-*.tmp
-*.pem
-stevedore
