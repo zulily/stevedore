@@ -3,7 +3,6 @@ package cmd
 import (
 	"flag"
 	"log"
-	"os"
 	"regexp"
 )
 
@@ -46,12 +45,14 @@ func init() {
 	flag.BoolVar(&Verbose, "verbose", false, "enables verbose output")
 	flag.Parse()
 
+	args := flag.Args()
+
 	switch {
-	case expr != "" && len(os.Args) == 1:
+	case expr != "" && len(args) == 1:
 		Filter = matchRegexp(expr)
-	case expr == "" && len(os.Args) > 1:
-		Filter = matchAny(os.Args[1:]...)
-	case expr != "" && len(os.Args) > 1:
+	case expr == "" && len(args) > 1:
+		Filter = matchAny(args[1:]...)
+	case expr != "" && len(args) > 1:
 		log.Fatal("Cannot mix -i and dockerfile args")
 	}
 }
