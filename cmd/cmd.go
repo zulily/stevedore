@@ -48,11 +48,11 @@ func init() {
 	args := flag.Args()
 
 	switch {
-	case expr != "" && len(args) == 1:
+	case expr != "" && len(args) == 0:
 		Filter = matchRegexp(expr)
-	case expr == "" && len(args) > 1:
+	case expr == "" && len(args) > 0:
 		Filter = matchAny(args[0:]...)
-	case expr != "" && len(args) > 1:
+	case expr != "" && len(args) > 0:
 		log.Fatal("Cannot mix -i and dockerfile args")
 	}
 }
