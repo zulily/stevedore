@@ -51,7 +51,7 @@ func init() {
 	case expr != "" && len(args) == 1:
 		Filter = matchRegexp(expr)
 	case expr == "" && len(args) > 1:
-		Filter = matchAny(args[1:]...)
+		Filter = matchAny(args[0:]...)
 	case expr != "" && len(args) > 1:
 		log.Fatal("Cannot mix -i and dockerfile args")
 	}
