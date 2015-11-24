@@ -26,7 +26,7 @@ func FindImagesInCwd(filter cmd.FilterFunc) ([]Image, error) {
 }
 
 func findImages(filter cmd.FilterFunc, wd string) (images []Image, err error) {
-	repo, path, tag := detectRepoPathAndTag()
+	repo, path, tag := detectRepoPathAndTag(wd)
 	dockerfiles := findDockerfiles()
 	for dockerfile, image := range mapDockerfileToRepo(repo, path, tag, dockerfiles...) {
 		if !filter(dockerfile) {
@@ -58,21 +58,16 @@ func (i Image) Build() (err error) {
 
 func (i Image) Push() (err error) {
 	if cmd.Verbose {
-		err = runCmdAndPipeOutput("gcloud", "docker", "push", i.Url)
+		err = runCmdAndPipeOutput("docker", "push", i.Url)
 	} else {
-		_, err = runCmdAndGetOutput("gcloud", "docker", "push", i.Url)
+		_, err = runCmdAndGetOutput("docker", "push", i.Url)
 	}
 
 	return err
 }
 
-func detectRepoPathAndTag() (repo, path, tag string) {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatal("error getting working dir", err)
-	}
-
-	repo, err = runCmdAndGetOutput("git", "config", "--get", "remote.origin.url")
+func detectRepoPathAndTag(wd string) (repo, path, tag string) {
+	repo, err := runCmdAndGetOutput("git", "config", "--get", "remote.origin.url")
 	if err != nil {
 		log.Fatal("error detecting git repo", err)
 	}
@@ -86,7 +81,6 @@ func detectRepoPathAndTag() (repo, path, tag string) {
 	}
 
 	path, err = runCmdAndGetOutput("git", "rev-parse", "--show-toplevel")
-	fmt.Printf("wd: %q, repo: %q, path: %q\n", wd, repo, path)
 	switch {
 	case wd == path:
 		path = ""
@@ -98,7 +92,6 @@ func detectRepoPathAndTag() (repo, path, tag string) {
 	}
 
 	tag, err = runCmdAndGetOutput("git", "rev-parse", "HEAD")
-	fmt.Printf("wd: %q, repo: %q, path: %q, tag: %q\n", wd, repo, path, tag)
 	if err != nil {
 		log.Fatal("error detecting git HEAD revision", err)
 	}
