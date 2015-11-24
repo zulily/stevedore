@@ -38,7 +38,7 @@ func main() {
 		for img := range built {
 			log.Println("Pushing", img)
 			if err = img.Push(); err != nil {
-				log.Println("error ppushing", img)
+				log.Println("error pushing", img)
 				log.Fatal(err)
 			}
 			wg.Done()
