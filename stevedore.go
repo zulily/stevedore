@@ -3,6 +3,7 @@ package stevedore
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -28,16 +29,18 @@ func FindImagesInCwd(filter cmd.FilterFunc) ([]Image, error) {
 func findImages(filter cmd.FilterFunc, wd string) (images []Image, err error) {
 	repo, path, tag := detectRepoPathAndTag(wd)
 	dockerfiles := findDockerfiles()
-	for dockerfile, image := range mapDockerfileToRepo(repo, path, tag, dockerfiles...) {
+	for dockerfile, repos := range mapDockerfileToRepos(repo, path, tag, dockerfiles...) {
 		if !filter(dockerfile) {
 			continue
 		}
 
-		img := Image{
-			Dockerfile: dockerfile,
-			Url:        image,
+		for _, repo := range repos {
+			img := Image{
+				Dockerfile: dockerfile,
+				Url:        repo,
+			}
+			images = append(images, img)
 		}
-		images = append(images, img)
 	}
 	return images, nil
 }
@@ -47,23 +50,11 @@ func (i Image) String() string {
 }
 
 func (i Image) Build() (err error) {
-	if cmd.Verbose {
-		err = runCmdAndPipeOutput("docker", "build", "-t", i.Url, "-f", i.Dockerfile, ".")
-	} else {
-		_, err = runCmdAndGetOutput("docker", "build", "-t", i.Url, "-f", i.Dockerfile, ".")
-	}
-
-	return err
+	return runCmdAndPipeOutput(cmd.Output, "docker", "build", "-t", i.Url, "-f", i.Dockerfile, ".")
 }
 
 func (i Image) Push() (err error) {
-	if cmd.Verbose {
-		err = runCmdAndPipeOutput("docker", "push", i.Url)
-	} else {
-		_, err = runCmdAndGetOutput("docker", "push", i.Url)
-	}
-
-	return err
+	return runCmdAndPipeOutput(cmd.Output, "docker", "push", i.Url)
 }
 
 func detectRepoPathAndTag(wd string) (repo, path, tag string) {
@@ -103,11 +94,11 @@ func detectRepoPathAndTag(wd string) (repo, path, tag string) {
 	return repo, path, tag
 }
 
-func runCmdAndPipeOutput(name string, arg ...string) error {
+func runCmdAndPipeOutput(w io.Writer, name string, arg ...string) error {
 	fmt.Println(">", name, strings.Join(arg, " "))
 	cmd := exec.Command(name, arg...)
 
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	cmd.Stdout, cmd.Stderr = w, w
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -134,15 +125,15 @@ func findDockerfiles() []string {
 	return matches
 }
 
-func mapDockerfileToRepo(base, path, tag string, dockerfile ...string) map[string]string {
-	m := make(map[string]string)
+func mapDockerfileToRepos(base, path, tag string, dockerfile ...string) map[string][]string {
+	m := make(map[string][]string)
 	for _, f := range dockerfile {
-		m[f] = generateRepoName(base, path, tag, f)
+		m[f] = generateRepoNames(base, path, tag, f)
 	}
 	return m
 }
 
-func generateRepoName(base, path, tag, dockerfile string) string {
+func generateRepoNames(base, path, tag, dockerfile string) []string {
 	if strings.HasSuffix(cmd.Registry, "/") {
 		base = cmd.Registry + base
 	} else {
@@ -158,10 +149,10 @@ func generateRepoName(base, path, tag, dockerfile string) string {
 	if index := strings.LastIndex(suffix, "."); index != -1 {
 		suffix = suffix[index+1:]
 	} else {
-		return base + ":" + tag
+		return []string{base + ":" + tag, base + ":latest"}
 	}
 
-	name := base + "-" + suffix + ":" + tag
+	name := base + "-" + suffix
 
 	// Docker image names can't have more than 2 '/' chars in them ¯\_(ツ)_/¯
 	// replace any offending '/' chars w/ '-'
@@ -170,5 +161,6 @@ func generateRepoName(base, path, tag, dockerfile string) string {
 		nameTokens[2] = strings.Replace(nameTokens[2], "/", "-", -1)
 		name = strings.Join(nameTokens, "/")
 	}
-	return name
+
+	return []string{name + ":" + tag, name + ":latest"}
 }

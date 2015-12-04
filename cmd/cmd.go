@@ -2,13 +2,16 @@ package cmd
 
 import (
 	"flag"
+	"io"
+	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 )
 
 var (
 	Registry string
-	Verbose  bool
+	Output   io.Writer  = ioutil.Discard
 	Filter   FilterFunc = matchAll
 )
 
@@ -39,11 +42,16 @@ func matchRegexp(expr string) FilterFunc {
 
 func init() {
 	var expr string
+	verbose := false
 
 	flag.StringVar(&expr, "i", "", "include only dockerfiles that match this regular expression")
 	flag.StringVar(&Registry, "registry-base", "docker.io", "the registry name to prepend to each Docker image")
-	flag.BoolVar(&Verbose, "verbose", false, "enables verbose output")
+	flag.BoolVar(&verbose, "verbose", false, "enables verbose output")
 	flag.Parse()
+
+	if verbose {
+		Output = os.Stdout
+	}
 
 	args := flag.Args()
 
