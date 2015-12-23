@@ -144,15 +144,13 @@ func generateRepoNames(base, path, tag, dockerfile string) []string {
 		base = base + "-" + path
 	}
 
+	name := base
+
 	// grab the suffix from the Dockerfile, if any (e.g. "Dockerfile.foo" => "foo")
 	suffix := dockerfile
 	if index := strings.LastIndex(suffix, "."); index != -1 {
-		suffix = suffix[index+1:]
-	} else {
-		return []string{base + ":" + tag, base + ":latest"}
+		name = name + "-" + suffix[index+1:]
 	}
-
-	name := base + "-" + suffix
 
 	// Docker image names can't have more than 2 '/' chars in them ¯\_(ツ)_/¯
 	// replace any offending '/' chars w/ '-'
