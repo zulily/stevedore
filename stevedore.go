@@ -81,11 +81,17 @@ func detectRepoPathAndTag(wd string) (repo, path, tag string) {
 	default:
 		log.Fatal("Current directory is not child of top level", wd, path)
 	}
+	
+	if cmd.Tag == "" {
 
-	tag, err = runCmdAndGetOutput("git", "rev-parse", "HEAD")
-	if err != nil {
-		log.Fatal("error detecting git HEAD revision", err)
+		tag, err = runCmdAndGetOutput("git", "rev-parse", "HEAD")
+		if err != nil {
+			log.Fatal("error detecting git HEAD revision", err)
+		}
+	} else {
+		tag = cmd.Tag
 	}
+
 
 	if len(tag) > 7 {
 		tag = tag[:7]
