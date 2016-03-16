@@ -13,7 +13,7 @@ var (
 	Registry string
 	Output   io.Writer  = ioutil.Discard
 	Filter   FilterFunc = matchAll
-	Tag		string
+	Tag      string
 )
 
 type FilterFunc func(dockerfile string) bool
