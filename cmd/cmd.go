@@ -13,6 +13,7 @@ var (
 	Registry string
 	Output   io.Writer  = ioutil.Discard
 	Filter   FilterFunc = matchAll
+	Tag      string
 )
 
 type FilterFunc func(dockerfile string) bool
@@ -47,6 +48,8 @@ func init() {
 	flag.StringVar(&expr, "i", "", "include only dockerfiles that match this regular expression")
 	flag.StringVar(&Registry, "registry-base", "docker.io", "the registry name to prepend to each Docker image")
 	flag.BoolVar(&verbose, "verbose", false, "enables verbose output")
+	flag.BoolVar(&Tag, "tag", "", "manually specify a tag")
+
 	flag.Parse()
 
 	if verbose {
