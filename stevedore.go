@@ -81,7 +81,7 @@ func detectRepoPathAndTag(wd string) (repo, path, tag string) {
 	default:
 		log.Fatal("Current directory is not child of top level", wd, path)
 	}
-	
+
 	if cmd.Tag == "" {
 
 		tag, err = runCmdAndGetOutput("git", "rev-parse", "HEAD")
@@ -91,7 +91,6 @@ func detectRepoPathAndTag(wd string) (repo, path, tag string) {
 	} else {
 		tag = cmd.Tag
 	}
-
 
 	if len(tag) > 7 {
 		tag = tag[:7]
@@ -164,6 +163,10 @@ func generateRepoNames(base, path, tag, dockerfile string) []string {
 		nameTokens := strings.SplitN(name, "/", 3)
 		nameTokens[2] = strings.Replace(nameTokens[2], "/", "-", -1)
 		name = strings.Join(nameTokens, "/")
+	}
+
+	if cmd.NoLatest {
+		return []string{name + ":" + tag}
 	}
 
 	return []string{name + ":" + tag, name + ":latest"}
