@@ -13,6 +13,7 @@ var (
 	Output              = ioutil.Discard
 	Filter   FilterFunc = matchAll
 	Tag      string
+	NoLatest bool
 )
 
 type FilterFunc func(dockerfile string) bool
@@ -48,7 +49,7 @@ func init() {
 	flag.StringVar(&Registry, "registry-base", "docker.io", "the registry name to prepend to each Docker image")
 	flag.BoolVar(&verbose, "verbose", false, "enables verbose output")
 	flag.StringVar(&Tag, "tag", "", "manually specify a tag")
-
+	flag.BoolVar(&NoLatest, "nolatest", false, "don't create the :latest tagged version")
 	flag.Parse()
 
 	if verbose {
