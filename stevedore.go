@@ -27,7 +27,11 @@ func FindImagesInCwd(filter cmd.FilterFunc) ([]Image, error) {
 }
 
 func findImages(filter cmd.FilterFunc, wd string) (images []Image, err error) {
-	repo, path, tag := detectRepoPathAndTag(wd)
+	repo, err := runCmdAndGetOutput("git", "config", "--get", "remote.origin.url")
+	if err != nil {
+		log.Fatal("error detecting git repo", err)
+	}
+	repo, path, tag := detectRepoPathAndTag(repo, wd)
 	dockerfiles := findDockerfiles()
 	for dockerfile, repos := range mapDockerfileToRepos(repo, path, tag, dockerfiles...) {
 		if !filter(dockerfile) {
@@ -57,21 +61,30 @@ func (i Image) Push() (err error) {
 	return runCmdAndPipeOutput(cmd.Output, "docker", "push", i.Url)
 }
 
-func detectRepoPathAndTag(wd string) (repo, path, tag string) {
-	repo, err := runCmdAndGetOutput("git", "config", "--get", "remote.origin.url")
-	if err != nil {
-		log.Fatal("error detecting git repo", err)
-	}
-
-	if index := strings.LastIndex(repo, ":"); index != -1 {
-		repo = repo[index+1:]
+func extractRepo(repo string) string {
+	if strings.HasPrefix(repo, "git") {
+		if index := strings.LastIndex(repo, ":"); index != -1 {
+			repo = repo[index+1:]
+		}
+	} else if strings.HasPrefix(repo, "http") {
+		if last := strings.LastIndex(repo, "/"); last != -1 {
+			tmp := repo[:last]
+			if first := strings.LastIndex(tmp, "/"); first != -1 {
+				repo = repo[first+1:]
+			}
+		}
 	}
 
 	if strings.HasSuffix(repo, ".git") {
 		repo = repo[:len(repo)-4]
 	}
 
-	path, err = runCmdAndGetOutput("git", "rev-parse", "--show-toplevel")
+	return repo
+}
+
+func detectRepoPathAndTag(gitRemote, wd string) (repo, path, tag string) {
+	repo = extractRepo(gitRemote)
+	path, err := runCmdAndGetOutput("git", "rev-parse", "--show-toplevel")
 	switch {
 	case wd == path:
 		path = ""

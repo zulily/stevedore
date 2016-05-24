@@ -37,3 +37,32 @@ func TestGenerateRepoNames(t *testing.T) {
 		}
 	}
 }
+
+type detectPathTagCase struct {
+	repo     string
+	expected string
+}
+
+var (
+	testDetectPathTagCases = []detectPathTagCase{
+		detectPathTagCase{
+			repo:     "git@github.com:foo/bar.git",
+			expected: "foo/bar",
+		},
+		detectPathTagCase{
+			repo:     "https://github.com/foo/bar.git",
+			expected: "foo/bar",
+		},
+	}
+)
+
+func TestDetectRepoPathAndTag(t *testing.T) {
+	for _, testCase := range testDetectPathTagCases {
+		actual := extractRepo(testCase.repo)
+
+		if actual != testCase.expected {
+			t.Errorf("Expected (%q), got (%q)", testCase.expected, actual)
+			t.FailNow()
+		}
+	}
+}
