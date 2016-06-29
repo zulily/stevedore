@@ -96,7 +96,7 @@ func detectRepoPathAndTag(wd string) (repo, path, tag string) {
 		tag = tag[:7]
 	}
 
-	return repo, path, tag
+	return strings.ToLower(repo), path, tag
 }
 
 func runCmdAndPipeOutput(w io.Writer, name string, arg ...string) error {
